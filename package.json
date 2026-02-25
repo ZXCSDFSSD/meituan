@@ -1,0 +1,33 @@
+{
+  "name": "meituan-auto-export",
+  "version": "3.0.0",
+  "description": "美团餐饮系统自动化导出工具 - 定时后台任务版本",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "import": "node main.js --import"
+  },
+  "keywords": [
+    "meituan",
+    "export",
+    "automation",
+    "scheduler",
+    "analytics",
+    "dashboard"
+  ],
+  "author": "Manus AI",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "node-schedule": "^2.1.1",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "sqlite3": "^5.1.6",
+    "xlsx": "^0.18.5",
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
