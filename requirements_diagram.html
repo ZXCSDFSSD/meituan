@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>美团餐饮数据系统 · 需求总览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    padding: 32px;
+    color: #1a1a2e;
+  }
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    padding: 16px 32px;
+    border-radius: 12px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  .grid { display: grid; gap: 20px; }
+  .row2 { grid-template-columns: 1fr 1fr; }
+  .row3 { grid-template-columns: 1fr 1fr 1fr; }
+  .row4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f2f5;
+  }
+  .card-header .icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .card-header h2 { font-size: 15px; font-weight: 600; }
+  .badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge.todo { background: #fff3cd; color: #856404; }
+  .badge.done { background: #d4edda; color: #155724; }
+
+  /* ── 模块1：下载 ── */
+  .dl-sources {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .dl-source {
+    background: #fff7f0;
+    border: 1px solid #ffd8b0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .dl-source .name { font-size: 13px; font-weight: 600; color: #d46b08; margin-bottom: 4px; }
+  .dl-source .desc { font-size: 11px; color: #888; }
+
+  .dl-strategy {
+    display: flex; gap: 10px;
+  }
+  .strategy-item {
+    flex: 1;
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .strategy-item .label { font-weight: 600; color: #389e0d; margin-bottom: 3px; }
+
+  /* ── 模块2：数据库 ── */
+  .db-tables {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .db-table {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .db-table .tname {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+  .db-table .field {
+    display: flex; align-items: center; gap: 4px;
+    color: #555;
+    margin: 2px 0;
+  }
+  .db-table .field .new-tag {
+    background: #ff4d4f;
+    color: #fff;
+    font-size: 9px;
+    padding: 0 4px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .t-orders { background: #e6f7ff; border: 1px solid #91d5ff; }
+  .t-orders .tname { color: #0050b3; }
+  .t-summary { background: #f9f0ff; border: 1px solid #d3adf7; }
+  .t-summary .tname { color: #531dab; }
+  .t-dishes { background: #fff7e6; border: 1px solid #ffd591; }
+  .t-dishes .tname { color: #874d00; }
+
+  /* ── 模块3：前端 ── */
+  .pages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .page-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+  }
+  .page-header {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .page-route {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+  .p1 .page-header { background: #1890ff; }
+  .p2 .page-header { background: #722ed1; }
+  .p3 .page-header { background: #13c2c2; }
+  .page-body { padding: 10px 12px; background: #fafafa; }
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    margin: 6px 0 3px;
+    letter-spacing: 0.5px;
+  }
+  .chip {
+    display: inline-block;
+    background: #f0f0f0;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    margin: 2px 2px 2px 0;
+    color: #333;
+  }
+  .chip.kpi { background: #e6f7ff; color: #0050b3; }
+  .chip.chart { background: #f6ffed; color: #389e0d; }
+  .chip.table { background: #fff7e6; color: #874d00; }
+
+  /* ── 模块4：API ── */
+  .api-list { display: flex; flex-direction: column; gap: 6px; }
+  .api-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+  }
+  .method {
+    background: #1890ff;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    width: 34px;
+    text-align: center;
+  }
+  .api-path { color: #096dd9; font-family: monospace; font-size: 12px; }
+  .api-desc { color: #777; margin-left: auto; font-size: 11px; }
+
+  /* ── 模块5：开发顺序 ── */
+  .steps { display: flex; align-items: center; gap: 0; }
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 10px 6px;
+    background: #f0f5ff;
+    border: 1px solid #adc6ff;
+    border-radius: 8px;
+    font-size: 12px;
+    position: relative;
+  }
+  .step .num {
+    display: block;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #2f54eb;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 22px;
+    margin: 0 auto 5px;
+  }
+  .arrow {
+    font-size: 18px;
+    color: #adc6ff;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .section-mb { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<h1>🍜 美团餐饮数据系统 · 需求总览</h1>
+
+<!-- 第一行：下载 + 数据库 -->
+<div class="grid row2 section-mb">
+
+  <!-- 模块1：数据下载 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon" style="background:#fff7e6">⬇️</div>
+      <h2>一、数据下载模块</h2>
+      <span class="badge todo">⬜ 重构中</span>
+    </div>
+    <div class="dl-sources">
+      <div class="dl-source">
+        <div class="name">全渠道订单明细</div>
+        <div class="desc">堂食 + 外卖 + 饿了么 + 京东</div>
+      </div>
+      <div class="dl-source">
+        <div class="name">菜品销售明细</div>
+        <div class="desc">菜品级销售数据</div>
+      </div>
+      <div class="dl-source">
+        <div class="name">收款明细</div>
+        <div class="desc">支付流水</div>
+      </div>
+    </div>
+    <div class="dl-strategy">
+      <div class="strategy-item">
+        <div class="label">🚀 首次启动</div>
+        下载 2025.01 至今 全量历史
+      </div>
+      <div class="strategy-item">
+        <div class="label">🕐 每日 00:05</div>
+        下载前一天的3个报表
+      </div>
+    </div>
+  </div>
+
+  <!-- 模块2：数据库 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon" style="background:#e6f7ff">🗄️</div>
+      <h2>二、数据库重构</h2>
+      <span class="badge todo">⬜ 待确认字段</span>
+    </div>
+    <div class="db-tables">
+      <div class="db-table t-orders">
+        <div class="tname">orders</div>
+        <div class="field"><span class="new-tag">NEW</span> channel（渠道）</div>
+        <div class="field"><span class="new-tag">NEW</span> platform（平台）</div>
+        <div class="field"><span class="new-tag">NEW</span> delivery_fee</div>
+        <div class="field">其余字段不变</div>
+      </div>
+      <div class="db-table t-summary">
+        <div class="tname">sales_summary</div>
+        <div class="field"><span class="new-tag">NEW</span> channel</div>
+        <div class="field">唯一约束 +channel</div>
+        <div style="margin-top:6px" class="tname">monthly_summary</div>
+        <div class="field"><span class="new-tag">NEW</span> channel</div>
+        <div class="field">唯一约束 +channel</div>
+      </div>
+      <div class="db-table t-dishes">
+        <div class="tname">order_dishes</div>
+        <div class="field"><span class="new-tag">NEW</span> business_date</div>
+        <div class="field">其余字段不变</div>
+        <div style="margin-top:6px" class="tname">item_sales_summary</div>
+        <div class="field">结构不变</div>
+        <div style="margin-top:6px" class="tname">order_payments</div>
+        <div class="field">待确认字段</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第二行：前端3页面 -->
+<div class="card section-mb">
+  <div class="card-header">
+    <div class="icon" style="background:#f9f0ff">🖥️</div>
+    <h2>三、前端看板（React + Ant Design + AntV G2）</h2>
+    <span class="badge todo">⬜ 待开发</span>
+  </div>
+  <div class="pages">
+
+    <div class="page-card p1">
+      <div class="page-header">
+        集团驾驶舱
+        <span class="page-route"> · /</span>
+      </div>
+      <div class="page-body">
+        <div class="section-label">筛选器</div>
+        <span class="chip">月份</span><span class="chip">门店多选</span><span class="chip">全渠道/堂食/外卖</span>
+        <div class="section-label">KPI 卡片</div>
+        <span class="chip kpi">总营业额</span><span class="chip kpi">总实收</span><span class="chip kpi">总订单数</span>
+        <span class="chip kpi">客单价</span><span class="chip kpi">优惠率</span><span class="chip kpi">毛利率(预留)</span>
+        <div class="section-label">图表</div>
+        <span class="chip chart">营收趋势折线（多线）</span>
+        <span class="chip chart">门店排名柱状图</span>
+        <div class="section-label">数据表</div>
+        <span class="chip table">本月 vs 上月各门店对比</span>
+      </div>
+    </div>
+
+    <div class="page-card p2">
+      <div class="page-header">
+        单店分析
+        <span class="page-route"> · /store</span>
+      </div>
+      <div class="page-body">
+        <div class="section-label">筛选器</div>
+        <span class="chip">门店(单选)</span><span class="chip">日期范围</span>
+        <span class="chip">按日/按月</span><span class="chip">渠道切换</span>
+        <div class="section-label">KPI 卡片</div>
+        <span class="chip kpi">营业额</span><span class="chip kpi">实收</span><span class="chip kpi">订单数</span>
+        <span class="chip kpi">客单价</span><span class="chip kpi">优惠额</span><span class="chip kpi">优惠率</span>
+        <div class="section-label">图表</div>
+        <span class="chip chart">营收趋势（营业额+实收双线）</span>
+        <span class="chip chart">订单量趋势折线</span>
+        <div class="section-label">数据表</div>
+        <span class="chip table">每日/每月明细</span>
+      </div>
+    </div>
+
+    <div class="page-card p3">
+      <div class="page-header">
+        商品分析
+        <span class="page-route"> · /products</span>
+      </div>
+      <div class="page-body">
+        <div class="section-label">筛选器</div>
+        <span class="chip">门店(单选/全部)</span><span class="chip">月份</span>
+        <div class="section-label">图表</div>
+        <span class="chip chart">TOP 20 销量横向柱状图</span>
+        <span class="chip chart">收入贡献率饼图(TOP10+其他)</span>
+        <div class="section-label">数据表</div>
+        <span class="chip table">菜品名称</span>
+        <span class="chip table">总销量</span>
+        <span class="chip table">销售额</span>
+        <span class="chip table">贡献率%</span>
+        <span class="chip table">出现订单数</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第三行：API + 开发顺序 -->
+<div class="grid row2">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="icon" style="background:#f6ffed">🔌</div>
+      <h2>四、后端 Analytics API</h2>
+      <span class="badge todo">⬜ 待补充</span>
+    </div>
+    <div class="api-list">
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/overview</span><span class="api-desc">集团KPI + 环比</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/trend</span><span class="api-desc">营收趋势（按天/渠道）</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/store-rank</span><span class="api-desc">门店排名</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/monthly-compare</span><span class="api-desc">月度门店对比</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/store-detail</span><span class="api-desc">单店日/月明细</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/analytics/products</span><span class="api-desc">菜品排名</span></div>
+      <div class="api-item"><span class="method">GET</span><span class="api-path">/api/stores</span><span class="api-desc">门店列表</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="icon" style="background:#e6fffb">🗺️</div>
+      <h2>五、开发顺序</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="num">1</span>确认<br>Excel字段</div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="num">2</span>重构<br>数据库</div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="num">3</span>重写<br>parser</div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="num">4</span>重写<br>downloader</div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="num">5</span>补充<br>API</div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="num">6</span>开发<br>前端</div>
+    </div>
+    <div style="margin-top:16px; padding:12px; background:#fffbe6; border-radius:8px; border:1px solid #ffe58f; font-size:12px; color:#613400;">
+      ⚠️ 当前阻塞点：需要获取3个页面的样本 Excel，确认实际字段名后才能推进 Step 2-3
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

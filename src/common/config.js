@@ -44,6 +44,7 @@ const config = {
             name:         '全渠道订单明细',
             url:          'https://pos.meituan.com/web/report/dpaas-report-channelOrderListV2#/rms-report/dpaas-report-channelOrderListV2',
             filePrefix:   '全渠道订单明细',
+            dateMethod:   'picker',   // 模拟点击 UI 选择器
             historyStart: { year: 2026, month: 1 },
         },
         {
@@ -51,13 +52,15 @@ const config = {
             name:         '菜品销售明细',
             url:          'https://pos.meituan.com/web/report/dishSaleDetail#/rms-report/dishSaleDetail',
             filePrefix:   '菜品销售明细',
+            dateMethod:   'picker',   // saas 日历控件（同全渠道订单明细）
             historyStart: { year: 2026, month: 1 },
         },
         {
             id:           'payments',
             name:         '收款明细',
-            url:          'https://pos.meituan.com/web/report/payment-new#/rms-report/payment-new',
+            url:          'https://pos.meituan.com/web/report/payment-new?_fe_report_use_storage_query=true#/rms-report/payment-new',
             filePrefix:   '收款明细',
+            dateMethod:   'direct',   // 直接赋值（已验证）
             historyStart: { year: 2026, month: 1 },
         },
     ],

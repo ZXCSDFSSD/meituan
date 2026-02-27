@@ -167,6 +167,23 @@ async function createTables(log = console.log) {
                 created_at       TEXT DEFAULT CURRENT_TIMESTAMP,
                 updated_at       TEXT DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(store_id, month)
+            )`,
+
+            // 收款方式汇总（来自收款明细报表，按门店/日期/支付方式聚合）
+            `CREATE TABLE IF NOT EXISTS payment_method_summary (
+                id              TEXT PRIMARY KEY,
+                store_id        TEXT NOT NULL,
+                store_name      TEXT NOT NULL,
+                date            TEXT NOT NULL,
+                month           TEXT NOT NULL,
+                payment_method  TEXT NOT NULL,
+                total_amount    REAL DEFAULT 0,
+                total_discount  REAL DEFAULT 0,
+                total_income    REAL DEFAULT 0,
+                payment_count   INTEGER DEFAULT 0,
+                created_at      TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at      TEXT DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(store_id, date, payment_method)
             )`
         ];
 

@@ -1,28 +1,28 @@
 /**
  * 导出编排模块
- * 一次登录，顺序下载 config.reportTypes 中的所有报表
+ * 纯 UI 自动化：日期选择 → 门店选择 → 查询 → 导出 → 下载
  */
 
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 
 const { launchBrowser, closeBrowser, sleep } = require('./browser');
-const { ensureLogin }                         = require('./login');
+const { ensureLogin } = require('./login');
 const {
-    changeDateRange, selectStores, clickQuery, clickExport
-}                                             = require('./page_actions');
+    changeDateRange, setDateRangeViaPicker, clickAdvancedStoreSelect, clickQuery, clickExport
+} = require('./page_actions');
 const {
     handleDownload, renameDownloadedFile, getLatestDownloadedFile
-}                                             = require('./download');
+} = require('./download');
 
-const config                                  = require('../common/config');
-const { createLogger }                        = require('../common/logger');
+const config = require('../common/config');
+const { createLogger } = require('../common/logger');
 const {
     getHistoricalMonths, getPreviousDayRange,
     generateMonthlyFileName, generateDailyFileName,
     markHistoryExported
-}                                             = require('../common/utils');
+} = require('../common/utils');
 
 const { log, logError } = createLogger(config.logDir);
 
@@ -46,41 +46,54 @@ async function exportReportInSession(page, reportType, dateInfo) {
     log(`\n  📋 报表: ${reportType.name}`);
 
     try {
-        // 1. 导航到报表页面
-        await page.goto(reportType.url, { waitUntil: 'networkidle2', timeout: config.timeout });
-        await sleep(2000);
-
-        // 2. 设置日期范围
-        await changeDateRange(page, dateInfo.startDate, dateInfo.endDate, log);
-
-        // 3. 选择门店（点"高 级"按钮，勾选 poiIds 对应门店）
-        await selectStores(page, config.poiIds, log);
-
-        // 4. 查询
-        await clickQuery(page, log);
-
-        // 5. 导出
-        await clickExport(page, log);
-
-        // // 6. 勾选全部字段并确认（部分页面有此弹窗，失败则忽略）
-        // try {
-        //     await selectAllAndConfirm(page, log);
-        // } catch (_) {
-        //     log('   ℹ️  无导出字段选择弹窗，跳过');
-        // }
-
-        // 7. 等待下载完成
         const filesBefore = new Set(
             fs.existsSync(config.downloadDir) ? fs.readdirSync(config.downloadDir) : []
         );
-        const downloaded = await handleDownload(page, config, log);
+
+        // 1. 导航到报表页面，等页面完成初始加载
+        await page.goto(reportType.url, { waitUntil: 'networkidle2', timeout: config.timeout });
+        await sleep(2000);
+
+        // 2. 找报表 iframe（美团 BI 将报表 UI 放在 iframe 中）
+        //    frame URL 包含 'rms-report'，找不到则降级用主页面
+        const frame = page.frames().find(f => f.url().includes('rms-report')) || page.mainFrame();
+        log(`   📌 使用上下文: ${frame === page.mainFrame() ? '主页面' : `iframe (${frame.url().split('/').pop()})`}`);
+
+        // 3. 设置日期范围（按 reportType.dateMethod 决定方式）
+        const dateSet = reportType.dateMethod === 'direct'
+            ? await changeDateRange(frame, dateInfo.startDate, dateInfo.endDate, log)
+            : await setDateRangeViaPicker(frame, dateInfo.startDate, dateInfo.endDate, log);
+        if (!dateSet) {
+            log(`   ⚠️  日期设置失败，跳过`);
+            return false;
+        }
+        await sleep(1000);
+
+        // 4. 打开高级门店选择 → 按 poiId 逐个勾选 → 确定（在 iframe 内执行）
+        await clickAdvancedStoreSelect(frame, config.poiIds, log);
+
+        // 5. 等待自动查询；若有查询按钮则点击（5s 超时，失败不中断）
+        await page.waitForNetworkIdle({ timeout: 15000 }).catch(() => {});
+        await clickQuery(frame, log);
+        await page.waitForNetworkIdle({ timeout: 30000 }).catch(() => {});
+
+        // 6. 点击导出按钮（在 iframe 内等待，最多 90 秒）
+        const exported = await clickExport(frame, log);
+        if (!exported) {
+            log(`   ⚠️  ${reportType.name} 导出失败，跳过`);
+            return false;
+        }
+
+        // 7. 处理下载：直接下载 OR 跳转下载清单点击下载按钮
+        //    下载对话框可能在 iframe 内或主页面，两处都尝试
+        const downloaded = await handleDownload(page, frame, config, log);
         if (!downloaded) {
             log(`   ⚠️  ${reportType.name} 下载失败，跳过`);
             return false;
         }
         await sleep(2000);
 
-        // 8. 重命名文件
+        // 7. 重命名文件
         const latestFile = getLatestDownloadedFile(config.downloadDir, Array.from(filesBefore));
         if (latestFile) {
             let newFileName;
@@ -117,7 +130,6 @@ async function exportMonthData(monthInfo) {
 
         const { browser: b, page } = await launchBrowser(config);
         browser = b;
-        // 登录后直接跳到第一个报表页面
         await ensureLogin(page, config, log, config.reportTypes[0].url);
 
         for (const reportType of config.reportTypes) {
@@ -141,7 +153,6 @@ async function exportHistoryData() {
     log('\n' + '='.repeat(60));
     log('🔄 开始导出历史数据');
 
-    // 取所有报表中最早的起始年月
     let minYear = 9999, minMonth = 12;
     for (const rt of config.reportTypes) {
         const { year, month } = rt.historyStart || { year: 2026, month: 1 };
@@ -167,12 +178,11 @@ async function exportHistoryData() {
             await ensureLogin(page, config, log, config.reportTypes[0].url);
 
             for (const reportType of config.reportTypes) {
-                // 跳过此报表起始月份之前的数据
                 const { year: sy, month: sm } = reportType.historyStart || { year: 2026, month: 1 };
                 const startTs = new Date(sy, sm - 1, 1).getTime();
-                const curTs   = new Date(monthInfo.year, monthInfo.month - 1, 1).getTime();
+                const curTs = new Date(monthInfo.year, monthInfo.month - 1, 1).getTime();
                 if (curTs < startTs) {
-                    log(`   ⏭️  ${reportType.name} 跳过（早于起始月 ${sy}-${String(sm).padStart(2,'0')}）`);
+                    log(`   ⏭️  ${reportType.name} 跳过（早于起始月 ${sy}-${String(sm).padStart(2, '0')}）`);
                     continue;
                 }
 
@@ -185,7 +195,7 @@ async function exportHistoryData() {
             await closeBrowser(browser);
         } catch (e) {
             logError(`月份 ${monthInfo.label} 处理失败: ${e.message}`);
-            if (browser) await closeBrowser(browser).catch(() => {});
+            if (browser) await closeBrowser(browser).catch(() => { });
         }
 
         await sleep(5000);

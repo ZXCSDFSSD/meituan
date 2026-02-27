@@ -59,7 +59,7 @@ async function ensureLogin(page, config, log = console.log, targetUrl = null) {
     log('🔐 检查登录状态...');
 
     // 用于验证 Cookie 是否有效的页面（主页）
-    const checkUrl = 'https://pos.meituan.com/web/report/main#/rms-report/home';
+    const checkUrl = 'https://pos.meituan.com';
 
     const cookiesLoaded = await loadCookies(page, config.cookieFile, log);
 
