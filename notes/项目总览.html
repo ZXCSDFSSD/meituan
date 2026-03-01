@@ -1,0 +1,365 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>美团系统·项目总览</title><style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang SC', '微软雅黑', sans-serif; max-width: 960px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.7; background: #f8f9fa; }
+  .container { background: #fff; padding: 40px 48px; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,.08); }
+  h1 { color: #1677ff; border-bottom: 3px solid #1677ff; padding-bottom: 12px; }
+  h2 { color: #262626; border-bottom: 1px solid #e8e8e8; padding-bottom: 8px; margin-top: 32px; }
+  h3 { color: #434343; margin-top: 24px; }
+  code { background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-family: 'Cascadia Code', Consolas, monospace; font-size: .9em; color: #d63031; }
+  pre { background: #1e1e2e; color: #cdd6f4; padding: 16px 20px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; color: inherit; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th { background: #1677ff; color: #fff; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #f0f0f0; }
+  tr:nth-child(even) td { background: #fafafa; }
+  blockquote { border-left: 4px solid #1677ff; margin: 0; padding: 8px 16px; background: #e6f4ff; color: #555; border-radius: 0 6px 6px 0; }
+  a { color: #1677ff; }
+  .footer { text-align: center; color: #aaa; margin-top: 32px; font-size: .85em; }
+</style></head><body><div class="container"><h1>常青麦香园 美团餐饮数据系统 — 项目总览</h1>
+<blockquote>
+<p>更新时间：2026-03-01 &nbsp;|&nbsp; 前端 Dashboard 开发完成 &nbsp;|&nbsp; 详细记忆见 <a href="%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86_%E5%90%8C%E6%AD%A5.md">项目记忆_同步.md</a></p>
+</blockquote>
+<hr>
+<h2>系统架构</h2>
+<pre><code>美团后台（网页）
+    │  Puppeteer 自动化下载（downloader）✅
+    ▼
+downloads/
+├── 全渠道订单明细/
+├── 菜品销售明细/
+└── 收款明细/
+    │  Excel 解析 + 写入（storage v3）✅
+    ▼
+data/meituan.db（SQLite，10张表）
+    │  Analytics REST API（9端点）✅
+    ▼
+前端 Dashboard（React + ECharts + S2）✅
+├── / 总览页（KPI + 趋势 + 品类 + 时段 + 排名）
+├── /trend 趋势页（双轴折线 + S2透视表）
+└── /store/:id 单店详情（全维度深度分析）
+</code></pre>
+<hr>
+<h2>模块状态</h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>状态</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>downloader</td>
+<td>✅ 完成</td>
+<td>Puppeteer 自动化，支持日度/月度/历史导出</td>
+</tr>
+<tr>
+<td>storage v3</td>
+<td>✅ 完成</td>
+<td>10张表，含时段统计、品类映射</td>
+</tr>
+<tr>
+<td>api（基础）</td>
+<td>✅ 完成</td>
+<td>health/status/storage/downloader 路由</td>
+</tr>
+<tr>
+<td>Analytics API</td>
+<td>✅ 完成</td>
+<td>9个端点：overview/trend/channel-breakdown/category-sales/timeslot/store-rank/monthly-compare/store-detail/products</td>
+</tr>
+<tr>
+<td>前端 Dashboard</td>
+<td>✅ 完成</td>
+<td>React 19 + TS + Vite 7 + ECharts + S2 v2 + Zustand 5，3页面，零TS错误，全文件注释</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>数据库（v3，10张表）</h2>
+<table>
+<thead>
+<tr>
+<th>表名</th>
+<th>来源</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>stores</td>
+<td>菜品销售明细</td>
+<td>8家门店，含 location_type/has_partner</td>
+</tr>
+<tr>
+<td>orders</td>
+<td>全渠道订单明细</td>
+<td>订单主表</td>
+</tr>
+<tr>
+<td>order_dishes</td>
+<td>菜品销售明细</td>
+<td>品项明细，含点菜时间/菜品小类</td>
+</tr>
+<tr>
+<td>order_payments</td>
+<td>收款明细</td>
+<td>目前未写入</td>
+</tr>
+<tr>
+<td>sales_summary</td>
+<td>聚合自 orders</td>
+<td>日度统计（含渠道拆分）</td>
+</tr>
+<tr>
+<td>monthly_summary</td>
+<td>聚合自 orders</td>
+<td>月度统计（含渠道拆分）</td>
+</tr>
+<tr>
+<td>item_sales_summary</td>
+<td>菜品销售明细</td>
+<td>品项日度汇总</td>
+</tr>
+<tr>
+<td>payment_method_summary</td>
+<td>收款明细</td>
+<td>收款方式汇总</td>
+</tr>
+<tr>
+<td><strong>timeslot_summary</strong></td>
+<td>品项明细点菜时间</td>
+<td><strong>24小时时段统计（v3新增）</strong></td>
+</tr>
+<tr>
+<td><strong>category_mapping</strong></td>
+<td>手工维护</td>
+<td><strong>品类名称标准化映射（v3新增）</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>门店清单（8家，武汉市）</h2>
+<table>
+<thead>
+<tr>
+<th>store_id</th>
+<th>门店名称</th>
+<th>选址</th>
+<th>合伙</th>
+<th>类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MD00001</td>
+<td>常青麦香园常青十一小区店</td>
+<td>社区</td>
+<td>否</td>
+<td>老店</td>
+</tr>
+<tr>
+<td>MD00005</td>
+<td>常青麦香园步行街店</td>
+<td>商圈</td>
+<td>否</td>
+<td>老店</td>
+</tr>
+<tr>
+<td>MD00006</td>
+<td>常青麦香园工厂店</td>
+<td>写字楼</td>
+<td>否</td>
+<td>老店</td>
+</tr>
+<tr>
+<td>MD00007</td>
+<td>常青麦香园新华路店</td>
+<td>社区</td>
+<td>是</td>
+<td>老店</td>
+</tr>
+<tr>
+<td>MD00008</td>
+<td>常青麦香园光谷华科店</td>
+<td>商圈</td>
+<td>是</td>
+<td>老店</td>
+</tr>
+<tr>
+<td>MD00012</td>
+<td>常青麦香园蔡甸中百店</td>
+<td>商圈</td>
+<td>是</td>
+<td>新店(2025-01起)</td>
+</tr>
+<tr>
+<td>MD00017</td>
+<td>常青麦香园铁机盛世家园店</td>
+<td>社区</td>
+<td>否</td>
+<td>新店(2025-02起)</td>
+</tr>
+<tr>
+<td>待定</td>
+<td>常青麦香园东辉花园店</td>
+<td>社区</td>
+<td>是</td>
+<td>新店(2025-03起)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>渠道标准名</h2>
+<table>
+<thead>
+<tr>
+<th>渠道</th>
+<th>对应来源</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>堂食</td>
+<td>POS/收银机/店内点餐</td>
+</tr>
+<tr>
+<td>美团外卖</td>
+<td>美团系</td>
+</tr>
+<tr>
+<td>饿了么</td>
+<td>饿了么 + <strong>淘宝闪购</strong>（同一平台）</td>
+</tr>
+<tr>
+<td>京东秒送</td>
+<td>京东系</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Analytics API（✅ 已完成）</h2>
+<table>
+<thead>
+<tr>
+<th>端点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET /api/analytics/overview</td>
+<td>总览：8店汇总</td>
+</tr>
+<tr>
+<td>GET /api/analytics/trend</td>
+<td>月度趋势（含同比/环比）</td>
+</tr>
+<tr>
+<td>GET /api/analytics/channel-breakdown</td>
+<td>渠道分解（堂食/外卖/子渠道）</td>
+</tr>
+<tr>
+<td>GET /api/analytics/category-sales</td>
+<td>部类销售分析</td>
+</tr>
+<tr>
+<td>GET /api/analytics/timeslot</td>
+<td>24小时时段分析</td>
+</tr>
+<tr>
+<td>GET /api/analytics/store-rank</td>
+<td>门店营业额排名</td>
+</tr>
+<tr>
+<td>GET /api/analytics/monthly-compare</td>
+<td>月度同比环比对比</td>
+</tr>
+<tr>
+<td>GET /api/analytics/store-detail/:id</td>
+<td>单店详情</td>
+</tr>
+<tr>
+<td>GET /api/analytics/products</td>
+<td>品项销量分析</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>关键业务指标（2025年全年）</h2>
+<ul>
+<li><strong>区域总营业额</strong>：17,503,063 元</li>
+<li><strong>堂食</strong>：15,963,008（91.2%）</li>
+<li><strong>外卖</strong>：1,540,055（8.8%）<ul>
+<li>饿了么：665,241（43%）</li>
+<li>京东秒送：477,389（31%）</li>
+<li>美团外卖：397,426（26%）</li>
+</ul>
+</li>
+<li><strong>堂食客单价（AC）</strong>：约 10 元</li>
+<li><strong>外卖客单价（AC）</strong>：约 13 元</li>
+</ul>
+<hr>
+<h2>启动方式</h2>
+<pre><code class="language-bash">node main.js           # 完整启动
+node main.js --import  # 仅导入历史数据
+</code></pre>
+<p>API 端口：3000</p>
+<hr>
+<h2>notes 文件索引</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>项目总览.html（本文件）</td>
+<td>系统架构、门店、指标总览</td>
+<td>✅ 已更新</td>
+</tr>
+<tr>
+<td><a href="综合手册.html">综合手册.html</a></td>
+<td>SQL视图评估 · 架构思维总结 · 技术要点速查 · 开发注意事项 · 待优化清单 · 全合一导航</td>
+<td>✅ 新增</td>
+</tr>
+<tr>
+<td>开发全景图.html</td>
+<td>模块开发进度全景、数据流向、API端点、数据库表结构、前端完成详情</td>
+<td>✅ v2 已更新</td>
+</tr>
+<tr>
+<td>接口规范.html</td>
+<td>前端接口规范（数据字典、页面规划、9个API完整格式、任务清单、设计规范）</td>
+<td>✅ v2 已更新</td>
+</tr>
+<tr>
+<td>技术教程.md</td>
+<td>11章技术学习文档（TypeScript/React/Vite/AntD/ECharts/S2/Zustand/Axios/SQL/Express）</td>
+<td>✅ 新增</td>
+</tr>
+<tr>
+<td>项目记忆_同步.md</td>
+<td>Claude 记忆详细版（代码规范、字段映射等）</td>
+<td>历史</td>
+</tr>
+<tr>
+<td>改修.md</td>
+<td>下载模块开发备注</td>
+<td>历史</td>
+</tr>
+<tr>
+<td>日期赋值方案备注.md</td>
+<td>美团页面日期输入解决方案</td>
+<td>历史</td>
+</tr>
+</tbody></table>
+
+<h2>启动方式（完整系统）</h2>
+<pre><code class="language-bash"># 后端（SQLite + Express :3000）
+node main.js
+
+# 前端（Vite :5173，proxy → :3000）
+cd frontend
+npm run dev
+
+# 前端生产构建
+cd frontend
+npm run build
+</code></pre>
+
+<div class="footer">更新：2026/3/1 &nbsp;|&nbsp; 前端 Dashboard 开发完成 &nbsp;|&nbsp; 全栈可运行</div></div></body></html>

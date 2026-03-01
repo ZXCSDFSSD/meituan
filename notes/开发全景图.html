@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>常青麦香园 · 数据系统全景图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f1117; color: #e2e8f0; font-size: 13px; }
+  h1 { text-align:center; padding: 28px 0 8px; font-size: 22px; color: #7dd3fc; letter-spacing: 2px; }
+  .subtitle { text-align:center; color:#64748b; margin-bottom: 28px; font-size: 12px; }
+
+  /* ── 总体布局 */
+  .page { max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; }
+  .section { margin-bottom: 36px; }
+  .section-title {
+    font-size: 14px; font-weight: 600; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 1px;
+    border-left: 3px solid #3b82f6; padding-left: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* ── 状态标签 */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; vertical-align: middle; margin-left: 6px;
+  }
+  .done   { background:#064e3b; color:#6ee7b7; }
+  .wip    { background:#1e3a5f; color:#93c5fd; }
+  .todo   { background:#2d1a00; color:#fbbf24; }
+  .new    { background:#4a044e; color:#e879f9; }
+
+  /* ── 卡片网格 */
+  .grid { display: grid; gap: 14px; }
+  .g2   { grid-template-columns: repeat(2, 1fr); }
+  .g3   { grid-template-columns: repeat(3, 1fr); }
+  .g4   { grid-template-columns: repeat(4, 1fr); }
+  @media(max-width:900px){ .g4,.g3 { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:600px){ .g4,.g3,.g2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #1e2535; border: 1px solid #2d3748; border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .card ul { padding-left: 18px; }
+  .card li { color: #94a3b8; line-height: 1.8; font-size: 12px; }
+  .card li strong { color: #cbd5e1; }
+  .card .mono { font-family: monospace; background: #141923; border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #67e8f9; }
+
+  /* ── 数据流图 */
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    background: #1e2535; border: 1px solid #2d3748; border-radius: 10px;
+    overflow: hidden;
+  }
+  .flow-node {
+    flex: 1; padding: 16px 12px; text-align: center;
+    border-right: 1px solid #2d3748;
+  }
+  .flow-node:last-child { border-right: none; }
+  .flow-node .fn-title { font-size: 12px; font-weight: 600; color: #7dd3fc; margin-bottom: 8px; }
+  .flow-node .fn-items { font-size: 11px; color: #64748b; line-height: 1.7; }
+  .flow-node .fn-items span { display:block; }
+  .flow-arr {
+    display:flex; align-items:center; padding: 0 6px;
+    color: #3b82f6; font-size: 18px; flex-shrink: 0;
+  }
+
+  /* ── 表格 */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #1a2236; color: #7dd3fc; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 7px 12px; border-bottom: 1px solid #1e2535; color: #94a3b8; }
+  tr:hover td { background: #1e2535; }
+  .tag-done  { color:#6ee7b7; } .tag-wip { color:#93c5fd; } .tag-todo { color:#fbbf24; }
+
+  /* ── API 端点列表 */
+  .api-list { display: grid; gap: 8px; }
+  .api-item {
+    display: grid; grid-template-columns: 120px 1fr; gap: 0;
+    background: #141923; border: 1px solid #2d3748; border-radius: 6px; overflow: hidden;
+  }
+  .api-method {
+    display:flex; align-items:center; justify-content:center;
+    background: #1a3a2a; color: #6ee7b7; font-family: monospace; font-size: 11px; font-weight:700;
+    padding: 8px;
+  }
+  .api-path { padding: 8px 12px; }
+  .api-path .path { font-family: monospace; color: #67e8f9; font-size: 12px; }
+  .api-path .desc { color: #64748b; font-size: 11px; margin-top: 2px; }
+  .api-path .params { font-size: 10px; color: #475569; margin-top: 2px; }
+
+  /* ── 映射关系 */
+  .mapping-row {
+    display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0;
+    align-items: center; margin-bottom: 10px;
+  }
+  .map-src  { background:#1a2a1a; border:1px solid #2d4a2d; border-radius:6px; padding:8px 10px; }
+  .map-dst  { background:#1a1a2a; border:1px solid #2d2d4a; border-radius:6px; padding:8px 10px; }
+  .map-arrow { text-align:center; color:#3b82f6; font-size:18px; }
+  .map-src .title, .map-dst .title { font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:4px; }
+  .map-src .items, .map-dst .items { font-size:11px; color:#64748b; line-height:1.6; }
+
+  /* ── 进度条 */
+  .progress-row { margin-bottom: 10px; }
+  .progress-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .progress-label span:first-child { font-size: 12px; color: #cbd5e1; }
+  .progress-label span:last-child  { font-size: 11px; color: #64748b; }
+  .progress-bar { height: 6px; background: #1e2535; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-green  { background: linear-gradient(90deg, #059669, #34d399); }
+  .fill-blue   { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+  .fill-yellow { background: linear-gradient(90deg, #d97706, #fbbf24); }
+  .fill-purple { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+
+  hr.sep { border: none; border-top: 1px solid #2d3748; margin: 28px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>常青麦香园 · 餐饮数据系统全景图</h1>
+<p class="subtitle">更新于 2026-03-01（前端 Dashboard 开发完成）&nbsp;|&nbsp; Node.js + SQLite + Express + React + ECharts + S2</p>
+
+<!-- ══════════ 开发进度 ══════════ -->
+<div class="section">
+  <div class="section-title">模块开发进度</div>
+  <div class="grid g4">
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ 数据下载模块 <span class="badge done">完成</span></div>
+      <ul>
+        <li>Puppeteer 自动化登录</li>
+        <li>日历控件日期设置（picker/direct）</li>
+        <li>多门店 POI 筛选</li>
+        <li>下载清单轮询（品项销售明细）</li>
+        <li>文件按报表类型存入子目录</li>
+        <li>自动重命名为日期区间文件名</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ 数据存储模块 v3 <span class="badge done">完成</span></div>
+      <ul>
+        <li>10 张表（v3 新增 timeslot_summary / category_mapping）</li>
+        <li>Excel 解析（range:2，过滤合计行）</li>
+        <li>三文件处理顺序：菜品→订单→收款</li>
+        <li>store_id 自动映射（按门店名称）</li>
+        <li>渠道解析（饿了么=淘宝闪购）</li>
+        <li>时段统计（24h，来自点菜时间）</li>
+        <li style="color:#6ee7b7">✅ 2026-03-01 四项 Bug 修复</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#93c5fd">🔧 Analytics API <span class="badge new">新完成</span></div>
+      <ul>
+        <li>overview 总览汇总</li>
+        <li>trend 月度趋势+MoM</li>
+        <li>channel-breakdown 渠道分解</li>
+        <li>category-sales 部类分析</li>
+        <li>timeslot 24h 时段</li>
+        <li>store-rank 门店排名</li>
+        <li>monthly-compare 同比环比</li>
+        <li>store-detail 单店详情</li>
+        <li>products 品项 Top N</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ 前端 Dashboard <span class="badge done">已完成</span></div>
+      <ul>
+        <li>React 19 + TypeScript + Vite 7</li>
+        <li>Ant Design v5（暗色/亮色双主题）</li>
+        <li>ECharts 5：趋势+环比双轴、品类横条、时段面积、渠道圆环</li>
+        <li>@antv/s2 v2：月度环比透视表</li>
+        <li>Zustand 5 全局状态（月份/门店/渠道/主题，localStorage 持久化）</li>
+        <li>3 个页面：总览 / 趋势 / 单店详情</li>
+        <li>TypeScript 严格模式，构建零错误</li>
+        <li>全部文件添加教育性代码注释</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="progress-row">
+      <div class="progress-label"><span>数据下载 (downloader)</span><span>100%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-green" style="width:100%"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>数据存储 (storage v3)</span><span>100%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-green" style="width:100%"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>Analytics API (9 端点)</span><span>100%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-blue" style="width:100%"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>前端 Dashboard（3页面 + 图表组件 + 注释文档）</span><span>100%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-purple" style="width:100%"></div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 存储模块修复（2026-03-01）══════════ -->
+<div class="section">
+  <div class="section-title">存储模块修复记录（2026-03-01）</div>
+  <div class="grid g2">
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ Fix1 — detectFileType 文件名识别</div>
+      <ul>
+        <li><strong>问题：</strong>美团系统原始文件名为 <span class="mono">品项销售明细</span>，解析函数只匹配 <span class="mono">菜品销售明细</span>，直接下载原始文件时无法识别</li>
+        <li><strong>修复：</strong>parser.js detectFileType 增加 <span class="mono">|| filename.includes('品项销售明细')</span></li>
+        <li><strong>验证：</strong>两种文件名均返回 <span class="mono">dish_sales</span> ✅</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ Fix2 — dish_category "--" 规范化</div>
+      <ul>
+        <li><strong>问题：</strong>调料/必选类品项在美团后台标记为 <span class="mono">--</span>，占全部品项约 15%（4593 条），品类报表异常</li>
+        <li><strong>修复：</strong>解析时 <span class="mono">.replace(/^-+$/, '') || '未分类'</span>，写入 item_sales_summary 时 category 同步设为 <span class="mono">未分类</span></li>
+        <li><strong>注：</strong>历史数据需重新导入后生效</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ Fix3 — payment store_id NULL 修复</div>
+      <ul>
+        <li><strong>问题：</strong>MD00017 铁机盛世家园店首次导入收款明细时，stores 表尚无该门店，导致 payment_method_summary.store_id = NULL</li>
+        <li><strong>修复1（历史数据）：</strong>一次性 UPDATE 补填 store_id</li>
+        <li><strong>修复2（新导入）：</strong>pipeline.js 每次写入收款后自动执行 UPDATE 修补 NULL</li>
+        <li><strong>验证：</strong>NULL store_id 记录数 = 0 ✅</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ Fix4 — 品类标准化映射（category_mapping）</div>
+      <ul>
+        <li><strong>问题：</strong>各门店品类名称极不统一（~98 种原始名，含 emoji 变体/空格变体），category-sales API 返回碎片化品类</li>
+        <li><strong>修复：</strong>新建 category_seed.js，提供 99 条全局映射（去重后），初始化时自动写入</li>
+        <li><strong>映射效果：</strong>原始 98 种 → 9 个标准品类（粉面类/调料必选/小吃类/盖浇饭/热干面/饮品甜品/称菜/炒饭炒粉/套餐）</li>
+        <li><strong>幂等性：</strong>修复 SQLite NULL UNIQUE 不生效问题，改为先清除再写入</li>
+        <li><strong>验证：</strong>映射条数 99，所有品类已完整映射 ✅</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 数据流图 ══════════ -->
+<div class="section">
+  <div class="section-title">数据流向</div>
+  <div class="flow">
+    <div class="flow-node">
+      <div class="fn-title">美团后台</div>
+      <div class="fn-items">
+        <span>全渠道订单明细</span>
+        <span>菜品销售明细</span>
+        <span>收款明细</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">Puppeteer 下载</div>
+      <div class="fn-items">
+        <span>日历控件设日期</span>
+        <span>POI 门店筛选</span>
+        <span>下载清单轮询</span>
+        <span>自动重命名</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">downloads/ XLSX</div>
+      <div class="fn-items">
+        <span>全渠道订单明细/</span>
+        <span>菜品销售明细/</span>
+        <span>收款明细/</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">解析 & 入库</div>
+      <div class="fn-items">
+        <span>XLSX range:2</span>
+        <span>过滤合计行</span>
+        <span>resolveChannel</span>
+        <span>时段聚合</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">meituan.db (v3)</div>
+      <div class="fn-items">
+        <span>10 张表</span>
+        <span>orders / dishes</span>
+        <span>sales_summary</span>
+        <span>timeslot_summary</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">Analytics API</div>
+      <div class="fn-items">
+        <span>9 个端点</span>
+        <span>Express :3000</span>
+        <span>CORS 开放</span>
+      </div>
+    </div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node">
+      <div class="fn-title">前端 Dashboard</div>
+      <div class="fn-items">
+        <span>React + Vite</span>
+        <span>ECharts + S2</span>
+        <span>Ant Design v5</span>
+        <span style="color:#6ee7b7">✅ 已完成</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 业务需求（来自 Excel 报表） ══════════ -->
+<div class="section">
+  <div class="section-title">业务需求（来自 2025年12月区域营业额数据库.xlsx — 11个Sheet）</div>
+  <table>
+    <tr>
+      <th>Sheet</th>
+      <th>业务需求</th>
+      <th>关键指标</th>
+      <th>对应 API 端点</th>
+      <th>状态</th>
+    </tr>
+    <tr>
+      <td>Sheet1</td>
+      <td>24年 vs 25年老店营业额（营业额/TC/AC 三块）</td>
+      <td>逐月营业额、TC、AC</td>
+      <td><span class="mono">/monthly-compare?metric=amount|tc|ac</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet2</td>
+      <td>2025年老店营业额同比/环比（三指标各一块）</td>
+      <td>YoY%、MoM%</td>
+      <td><span class="mono">/monthly-compare</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet3</td>
+      <td>25年新店营业额环比分析（3家新店）</td>
+      <td>各月营业额、MoM</td>
+      <td><span class="mono">/trend?store_id=新店ID</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet4</td>
+      <td>2025年分渠道营业额全年汇总（30列）</td>
+      <td>堂食/外卖/美团/饿了么/京东 × 营业额/TC/AC/优惠</td>
+      <td><span class="mono">/channel-breakdown</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet5</td>
+      <td>2025年12月堂食&外卖（同Sheet4结构，单月）</td>
+      <td>同 Sheet4</td>
+      <td><span class="mono">/channel-breakdown?month=2025-12</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet6</td>
+      <td>2025年区域门店销售部类分析全年（57+品类×12月）</td>
+      <td>各品类销量/金额/占比、月度环比</td>
+      <td><span class="mono">/category-sales</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet7</td>
+      <td>部类统计-堂食（11月+12月，按店型分组）</td>
+      <td>堂食各品类销量/金额</td>
+      <td><span class="mono">/category-sales?channel=堂食</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet8</td>
+      <td>部类统计-外卖（11月+12月）</td>
+      <td>外卖各品类销量/金额</td>
+      <td><span class="mono">/category-sales?channel=美团外卖</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet9</td>
+      <td>华南海鲜店历史档案（2016-2019，已关店）</td>
+      <td>历史记录，不纳入分析</td>
+      <td>— 不需要 API —</td>
+      <td class="tag-todo">跳过</td>
+    </tr>
+    <tr>
+      <td>Sheet10</td>
+      <td>2025年区域门店销售时段分析（按店型组）</td>
+      <td>21个时段 × 月份 × 店型分组</td>
+      <td><span class="mono">/timeslot</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+    <tr>
+      <td>Sheet11</td>
+      <td>2025年门店销售时段分析（单店明细）</td>
+      <td>每店21时段 × 12月</td>
+      <td><span class="mono">/timeslot?store_id=MD00001</span></td>
+      <td class="tag-done">✅</td>
+    </tr>
+  </table>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ Analytics API 端点 ══════════ -->
+<div class="section">
+  <div class="section-title">Analytics API — 9 个端点</div>
+  <div class="api-list">
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/overview</div>
+        <div class="desc">总览：全区域营业额 + 渠道拆分 + 收款方式汇总</div>
+        <div class="params">?month=YYYY-MM &amp;store_id=MD00001</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/trend</div>
+        <div class="desc">月度趋势：逐月营业额 + 环比MoM（含门店/渠道过滤）</div>
+        <div class="params">?channel=all &amp;store_id= &amp;start_month= &amp;end_month= &amp;limit=24</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/channel-breakdown</div>
+        <div class="desc">渠道分解：每家门店 × 堂食/外卖/美团/饿了么/京东 详细数据（对应Sheet4/5）</div>
+        <div class="params">?month=YYYY-MM &amp;store_id=</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/category-sales</div>
+        <div class="desc">部类销售：各品类销量/金额/占比（对应Sheet6/7/8）</div>
+        <div class="params">?month= &amp;store_id= &amp;channel=堂食|外卖 &amp;limit=60</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/timeslot</div>
+        <div class="desc">24小时时段分析：每小时TC/营业额 + 高峰时段（对应Sheet10/11）</div>
+        <div class="params">?month= &amp;store_id= &amp;channel=all</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/store-rank</div>
+        <div class="desc">门店排名：营业额降序 + 环比MoM + 门店属性（选址/合伙）</div>
+        <div class="params">?month= &amp;channel=all</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/monthly-compare</div>
+        <div class="desc">同比环比：按门店逐月 营业额/TC/AC，含YoY%和MoM%（对应Sheet1/2）</div>
+        <div class="params">?year=2025 &amp;channel=all &amp;metric=amount|tc|ac &amp;store_id=</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/store-detail/:id</div>
+        <div class="desc">单店详情：门店信息 + 12月趋势 + 渠道分解 + 品类Top10 + 时段 + 收款方式</div>
+        <div class="params">?month= &amp;channel=all &nbsp; 例：/store-detail/MD00008</div>
+      </div>
+    </div>
+
+    <div class="api-item">
+      <div class="api-method">GET</div>
+      <div class="api-path">
+        <div class="path">/api/analytics/products</div>
+        <div class="desc">品项分析：Top N 品项 销量/金额/占比</div>
+        <div class="params">?month= &amp;store_id= &amp;category=炒饭类 &amp;limit=20</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 数据分析逻辑 ══════════ -->
+<div class="section">
+  <div class="section-title">数据分析逻辑 — 原始数据 → 数据库 → API</div>
+
+  <div class="grid g3" style="margin-bottom:20px;">
+
+    <div class="card">
+      <div class="card-title" style="color:#a78bfa">菜品销售明细（品项销售明细）</div>
+      <ul>
+        <li><strong>唯一含机构编码</strong>（→ stores 表，必须优先处理）</li>
+        <li>品项名、品类大类/小类、数量、金额、收入、优惠</li>
+        <li><strong>点菜时间</strong> → 提取 hour(0-23) → timeslot_summary</li>
+        <li>下单时间所属餐段 → meal_period 字段</li>
+        <li>订单来源 → resolveChannel → channel 字段</li>
+        <li>→ 写入：order_dishes / item_sales_summary / timeslot_summary</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#f9a8d4">全渠道订单明细</div>
+      <ul>
+        <li><strong>无机构编码</strong>，门店名称查 stores 表获取 store_id</li>
+        <li>订单号、订单金额、顾客实付、订单收入、优惠</li>
+        <li>订单来源 + 用餐方式 → resolveChannel → channel</li>
+        <li>创建时间 → business_date（营业日期）</li>
+        <li>→ 写入：orders 表</li>
+        <li>→ 聚合：sales_summary（日度）/ monthly_summary（月度）</li>
+        <li>   两表各含渠道拆分行（all / 堂食 / 外卖各渠道）</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#fcd34d">收款明细</div>
+      <ul>
+        <li><strong>无机构编码</strong>，门店名称查 stores 表获取 store_id</li>
+        <li>结账方式（微信/支付宝/现金等）</li>
+        <li>支付金额、收款金额、手续费、到账金额</li>
+        <li>业务小类（区分堂食/外卖收款）</li>
+        <li>→ 写入：payment_method_summary（按门店+日期+方式聚合）</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- 关键计算逻辑 -->
+  <div class="grid g2">
+
+    <div class="card">
+      <div class="card-title" style="color:#67e8f9">渠道解析规则（resolveChannel）</div>
+      <ul>
+        <li>订单来源含"美团" → <strong>美团外卖</strong></li>
+        <li>订单来源含"饿了么"/"淘宝"/"闪购" → <strong>饿了么</strong>（同一平台）</li>
+        <li>订单来源含"京东" → <strong>京东秒送</strong></li>
+        <li>用餐方式="外卖"/"外带" → <strong>外卖</strong>（未知子平台）</li>
+        <li>其余（POS/收银/店内）→ <strong>堂食</strong></li>
+        <li>summary 表额外存 channel='all' 汇总行</li>
+        <li>前端：全渠道=all / 外卖=美团+饿了么+京东之和</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#67e8f9">时段统计逻辑（timeslot_summary）</div>
+      <ul>
+        <li>数据来源：菜品销售明细的"点菜时间"字段</li>
+        <li>格式：<span class="mono">2026/02/26 20:04:33</span></li>
+        <li>提取：正则 <span class="mono">\s(\d{1,2}):</span> → hour 0-23</li>
+        <li>聚合维度：store_id + date + hour + channel</li>
+        <li>指标：TC（不同order_id数）+ total_amount + total_income</li>
+        <li>额外存 channel='all' 汇总行</li>
+        <li>前端展示：补全0-23所有时段，无数据填0</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#67e8f9">store_id 映射关键链路</div>
+      <ul>
+        <li>菜品销售明细 → 含"机构编码" → 写入/更新 stores 表</li>
+        <li>全渠道订单明细 → 按"门店名称"查 stores 表 → 取 store_id</li>
+        <li>收款明细 → 按"门店"查 stores 表 → 取 store_id</li>
+        <li><strong>处理必须按序：菜品 → 订单 → 收款</strong></li>
+        <li>未匹配门店名 → store_id 为 null（不报错，正常写入）</li>
+        <li>新店首次导入后 store_id 自动写入 stores 表</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#67e8f9">品类标准化（category_mapping）</div>
+      <ul>
+        <li>各门店品类名称不统一（~98 种原始名，含 emoji 变体）</li>
+        <li>category_mapping 表：raw_name + store_id → standard_name</li>
+        <li>NULL store_id = 全局映射；非NULL = 门店级覆盖</li>
+        <li>item_sales_summary 目前存储原始品类名</li>
+        <li>API /category-sales 查询时 JOIN category_mapping → 标准化名称</li>
+        <li><strong style="color:#6ee7b7">✅ 已完成：99 条全局映射，归并为 9 大标准品类</strong></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 数据库表结构 ══════════ -->
+<div class="section">
+  <div class="section-title">数据库表结构（v3，10张）</div>
+  <table>
+    <tr>
+      <th>表名</th>
+      <th>主键 / 唯一约束</th>
+      <th>数据来源</th>
+      <th>关键字段</th>
+      <th>版本</th>
+    </tr>
+    <tr>
+      <td><strong>stores</strong></td>
+      <td>PK: store_id</td>
+      <td>菜品销售明细（机构编码）</td>
+      <td>store_id, store_name, location_type, has_partner</td>
+      <td class="tag-done">v3</td>
+    </tr>
+    <tr>
+      <td><strong>orders</strong></td>
+      <td>PK: order_id</td>
+      <td>全渠道订单明细</td>
+      <td>order_amount, customer_paid, channel, business_date</td>
+      <td>v1</td>
+    </tr>
+    <tr>
+      <td><strong>order_dishes</strong></td>
+      <td>AUTOINCREMENT</td>
+      <td>菜品销售明细</td>
+      <td>dish_name, dish_category, <strong>dish_ordered_time, meal_period, order_source</strong></td>
+      <td class="tag-done">v3</td>
+    </tr>
+    <tr>
+      <td><strong>order_payments</strong></td>
+      <td>AUTOINCREMENT</td>
+      <td>收款明细（未写入）</td>
+      <td>payment_method, payment_amount, handling_fee</td>
+      <td>v1</td>
+    </tr>
+    <tr>
+      <td><strong>sales_summary</strong></td>
+      <td>UNIQUE(store_id, date, channel)</td>
+      <td>聚合自 orders</td>
+      <td>total_amount, total_income, order_count, avg_order_amount</td>
+      <td>v2</td>
+    </tr>
+    <tr>
+      <td><strong>monthly_summary</strong></td>
+      <td>UNIQUE(store_id, month, channel)</td>
+      <td>聚合自 orders</td>
+      <td>same as sales_summary</td>
+      <td>v2</td>
+    </tr>
+    <tr>
+      <td><strong>item_sales_summary</strong></td>
+      <td>UNIQUE(store_id, item_id, date)</td>
+      <td>菜品销售明细聚合</td>
+      <td>item_name, category, total_quantity, total_amount</td>
+      <td>v2</td>
+    </tr>
+    <tr>
+      <td><strong>payment_method_summary</strong></td>
+      <td>UNIQUE(store_name, date, payment_method, biz_sub_type)</td>
+      <td>收款明细聚合</td>
+      <td>payment_method, total_amount, handling_fee</td>
+      <td>v2</td>
+    </tr>
+    <tr>
+      <td><strong>timeslot_summary</strong></td>
+      <td>UNIQUE(store_id, date, hour, channel)</td>
+      <td>菜品销售明细（点菜时间）</td>
+      <td>hour(0-23), tc, total_amount, total_income</td>
+      <td class="tag-done">v3 新增</td>
+    </tr>
+    <tr>
+      <td><strong>category_mapping</strong></td>
+      <td>UNIQUE(raw_name, store_id)</td>
+      <td>手工维护</td>
+      <td>raw_name, standard_name, store_id(NULL=全局)</td>
+      <td class="tag-done">v3 新增</td>
+    </tr>
+  </table>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 门店清单 ══════════ -->
+<div class="section">
+  <div class="section-title">门店清单（8家，武汉市，全部直营）</div>
+  <table>
+    <tr><th>store_id</th><th>门店名称</th><th>选址类型</th><th>合伙经营</th><th>类型</th><th>数据可用期</th></tr>
+    <tr><td>MD00001</td><td>常青麦香园常青十一小区店</td><td>社区</td><td>否</td><td>老店</td><td>全年</td></tr>
+    <tr><td>MD00005</td><td>常青麦香园步行街店</td><td>商圈</td><td>否</td><td>老店</td><td>全年</td></tr>
+    <tr><td>MD00006</td><td>常青麦香园工厂店</td><td>写字楼</td><td>否</td><td>老店</td><td>全年</td></tr>
+    <tr><td>MD00007</td><td>常青麦香园新华路店</td><td>社区</td><td><strong>是</strong></td><td>老店</td><td>全年</td></tr>
+    <tr><td>MD00008</td><td>常青麦香园光谷华科店</td><td>商圈</td><td><strong>是</strong></td><td>老店</td><td>全年</td></tr>
+    <tr><td>MD00012</td><td>常青麦香园蔡甸中百店</td><td>商圈</td><td><strong>是</strong></td><td>新店</td><td>2025-01起</td></tr>
+    <tr><td>MD00017</td><td>常青麦香园铁机盛世家园店</td><td>社区</td><td>否</td><td>新店</td><td>2025-02起</td></tr>
+    <tr><td>待定</td><td>常青麦香园东辉花园店</td><td>社区</td><td><strong>是</strong></td><td>新店</td><td>2025-03起</td></tr>
+  </table>
+</div>
+
+<!-- ══════════ 前端接口规范索引 ══════════ -->
+<div class="section">
+  <div class="section-title">前端接口规范 v1.0（项目总负责人+数据分析师产出）</div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-title" style="color:#e879f9">📄 接口规范文档（notes/接口规范.html）</div>
+      <ul>
+        <li><strong>第一章</strong>：业务指标口径说明书（数据字典），共 12 个指标定义</li>
+        <li><strong>第二章</strong>：数据库表结构设计建议（v3 补充：4项新增）</li>
+        <li><strong>第三章</strong>：前端 Dashboard 页面规划（7页 × 组件选型）</li>
+        <li><strong>第四章</strong>：API 接口规范（9端点完整 Request + Response 格式）</li>
+        <li><strong>第五章</strong>：11个Sheet → API 完整映射表</li>
+        <li><strong>第六章</strong>：后端开发任务清单（高/中/低 优先级分级）</li>
+        <li><strong>第七章</strong>：前端全局设计规范（颜色/数字/筛选器/ECharts/S2）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#e879f9">📋 三方协作分工</div>
+      <ul>
+        <li><strong style="color:#93c5fd">【1】项目总负责人</strong>：✅ 已完成 — 接口规范 + 数据字典 + 任务分配</li>
+        <li><strong style="color:#6ee7b7">【2】前端工程师</strong>：✅ 已完成 — 3页面 + 9组件 + 全文件注释 + 零 TS 错误</li>
+        <li><strong style="color:#6ee7b7">【3】后端工程师</strong>：✅ 已完成 — 9端点 Analytics API + 存储模块 v3 + 4项 Bug 修复</li>
+        <li>联调验证：Vite proxy /api → :3000，所有端点 HTTP 200 ✅</li>
+        <li>文档输出：技术教程.md（11章）+ 代码注释（所有前端文件）</li>
+        <li>下一步：补充历史月份数据（node main.js --import）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 前端 Dashboard 完成详情 ══════════ -->
+<div class="section">
+  <div class="section-title">前端 Dashboard 完成详情（2026-03-01）</div>
+
+  <div class="grid g3" style="margin-bottom:14px;">
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">📄 页面（3个）</div>
+      <ul>
+        <li><strong>/ 总览页</strong> — KPI卡片 + 趋势折线 + 渠道圆环 + 品类横条 + 时段面积 + 门店排名表</li>
+        <li><strong>/trend 趋势页</strong> — 双轴折线（营业额+MoM） + S2 月度环比透视表</li>
+        <li><strong>/store/:id 单店详情</strong> — 单店KPI + 12月趋势 + 品类Top10 + 时段 + 收款表 + S2透视</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">🧩 组件（9个）</div>
+      <ul>
+        <li><strong>图表：</strong>StoreTrendChart / CategoryBarChart / TimeslotAreaChart / ChannelPieChart / S2MonthlyPivot</li>
+        <li><strong>布局：</strong>AppLayout（侧边导航+顶部筛选器+主题切换）</li>
+        <li><strong>Hook：</strong>useOverview / useStoreDetail（自定义 Hook 三态模型）</li>
+        <li><strong>Store：</strong>globalFilter（Zustand 5 + persist）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">📁 前端文件结构</div>
+      <ul>
+        <li><span class="mono">frontend/</span> — Vite 7 项目根</li>
+        <li><span class="mono">src/api/client.ts</span> — Axios 基础客户端</li>
+        <li><span class="mono">src/stores/globalFilter.ts</span> — Zustand 全局状态</li>
+        <li><span class="mono">src/hooks/</span> — 自定义 Hook（数据获取）</li>
+        <li><span class="mono">src/components/charts/</span> — 5个图表组件</li>
+        <li><span class="mono">src/pages/</span> — Overview / Trend / StoreDetail</li>
+        <li><span class="mono">src/App.tsx</span> — Router + ConfigProvider + Lazy</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-title" style="color:#a78bfa">关键技术决策</div>
+      <ul>
+        <li><strong>预聚合策略</strong>：monthly_summary 表在导入时计算，API 只做 SELECT+SUM，O(1) 响应</li>
+        <li><strong>渠道聚合</strong>：前端"外卖"= 美团+饿了么+京东 IN 子句，不存"外卖"汇总行</li>
+        <li><strong>S2 命令式</strong>：new PivotSheet → setTheme → render → destroy，配合 useRef 双用途（DOM绑定+实例保存）</li>
+        <li><strong>Zustand persist</strong>：partialize 只持久化月份/主题，不持久化 loading 状态</li>
+        <li><strong>TS 严格模式</strong>：TS2698 泛型错误 → 改用具体类型引用解决</li>
+        <li><strong>Vite 代理</strong>：/api → :3000，开发期零 CORS 问题</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#a78bfa">文档输出（技术教程）</div>
+      <ul>
+        <li>📘 <strong>notes/技术教程.md</strong>（11章学习文档）</li>
+        <li>第1章：TypeScript vs JS（类型、接口、泛型）</li>
+        <li>第2章：React Hooks（useState/useEffect/useRef/自定义Hook）</li>
+        <li>第3章：Vite 构建工具与 proxy 配置</li>
+        <li>第4章：Ant Design v5（ConfigProvider/Grid/Table/Select）</li>
+        <li>第5章：ECharts 5（双轴/面积图/横条图/圆环图）</li>
+        <li>第6章：@antv/s2 v2 透视表（命令式 API）</li>
+        <li>第7章：Zustand 5 全局状态管理</li>
+        <li>第8章：Axios HTTP 请求</li>
+        <li>第9章：SQL 基础（JOIN/聚合/COALESCE/CASE WHEN）</li>
+        <li>第10章：Express.js 路由</li>
+        <li>第11章：项目整体架构回顾</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ══════════ 下一步 ══════════ -->
+<div class="section">
+  <div class="section-title">下一步</div>
+  <div class="grid g3">
+    <div class="card">
+      <div class="card-title" style="color:#6ee7b7">✅ 已完成：前端 Dashboard 开发</div>
+      <ul>
+        <li>3 个页面 + 9 个组件全部开发完成</li>
+        <li>TypeScript 严格模式，构建零错误（11.17s）</li>
+        <li>全文件教育性注释 + 11章技术教程</li>
+        <li>Vite proxy 联调 → 全部 API HTTP 200 ✅</li>
+        <li>暗色/亮色双主题（Ant Design v5）</li>
+        <li>接口规范文档更新至 v2.0</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#fbbf24">① 补充历史月份数据</div>
+      <ul>
+        <li>目前只有 2026-02 数据（3天样本）</li>
+        <li>需导入 2025-01 至 2025-12 全年数据</li>
+        <li>东辉花园店（2025-03起）store_id 待导入后确认</li>
+        <li>运行：<span class="mono">node main.js --import</span></li>
+        <li>注意：Fix2 dish_category 需重新导入才生效</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#fbbf24">② 生产部署（可选）</div>
+      <ul>
+        <li>前端：<span class="mono">npm run build</span> → dist/ 静态文件</li>
+        <li>后端：Express 提供静态文件服务，合并端口</li>
+        <li>或：Nginx 反代 + PM2 保活</li>
+        <li>数据库备份策略（定期 cp meituan.db）</li>
+        <li>日志轮转（logs/ 目录管理）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

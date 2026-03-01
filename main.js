@@ -3,14 +3,13 @@
  *
  * 启动流程：
  * 1. 初始化数据库
- * 2. 导入 downloads/ 下已有的 Excel（跳过已处理的）
- * 3. 启动 Express API server（端口 3000）
- * 4. 若历史数据从未下载过，后台启动 Puppeteer 下载 2025-01 至今所有月份
+ * 2. 启动 Express API server（端口 3000）
+ * 3. 若历史数据从未下载过，后台启动 Puppeteer 下载 2025-01 至今所有月份
  *    下载完成后自动导入
- * 5. 注册每日 00:05 定时任务（Puppeteer 下载前一天数据 → 导入）
+ * 4. 注册每日 00:05 定时任务（Puppeteer 下载前一天数据 → 导入）
  *
  * 使用：
- *   node main.js              # 完整启动
+ *   node main.js              # 完整启动（不自动导入，仅启动 API）
  *   node main.js --import     # 仅导入 downloads/ 已有 Excel，不启动服务
  */
 
@@ -85,7 +84,7 @@ async function main() {
 
     log(`\n${'='.repeat(60)}`);
     log(`🚀 美团餐饮数据系统启动`);
-    log(`   模式: ${importOnly ? '仅导入' : '完整启动'}`);
+    log(`   模式: ${importOnly ? '仅导入' : '完整启动（不自动导入）'}`);
     log(`${'='.repeat(60)}\n`);
 
     try {
@@ -94,31 +93,32 @@ async function main() {
         await storage.initDatabase(log);
         log(`✅ 数据库初始化完成`);
 
-        // 2. 导入已有 Excel
-        await importAllExcelFiles();
-
+        // --import 模式：仅导入 Excel，导完退出
         if (importOnly) {
+            await importAllExcelFiles();
             log(`\n✅ 导入完成，程序退出`);
             await storage.db.closeDatabase();
             process.exit(0);
         }
 
-        // 3. 启动 API Server
+        // 2. 启动 API Server（不导入，直接启动）
         startServer(log);
-
-        // 4. 若历史数据从未下载，后台启动下载（不阻塞服务）
+        
+        // 3. 若历史数据从未下载，后台启动下载（不阻塞服务）
         if (shouldExportHistory(config.statusFile)) {
             startHistoryDownloadInBackground();
+
         } else {
             log(`✅ 历史数据已下载完成，跳过`);
         }
 
-        // 5. 注册每日定时任务
+        // 4. 注册每日定时任务
         registerDailyTask();
 
         log(`\n✅ 系统启动完成，等待请求...`);
         log(`   API: http://localhost:${config.port}`);
         log(`   数据库: ${config.dbPath}`);
+        log(`   提示: 导入 Excel 请运行 node main.js --import`);
 
     } catch (e) {
         log(`\n❌ 系统启动失败: ${e.message}`);

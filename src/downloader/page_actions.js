@@ -61,6 +61,28 @@ async function changeDateRange(context, startDate, endDate, log = console.log) {
 }
 
 // ── 方式二：UI 日期选择器 ──────────────────────────────────────────────────────
+//
+// ── [备份] 旧版：点年份标题→进年份网格→点月份标题→进月份网格 ──────────────────
+// async function setDateRangeViaPicker_OLD(context, startDate, endDate, log = console.log) {
+//     ...
+//     // ── 3. 切换年份（当前年份不是目标年才进入年份网格）──
+//     const yearBtn = targetDoc.querySelector('.saas-picker-year-btn');
+//     if (!yearBtn.innerText.includes(String(sy))) {
+//         yearBtn.click(); await sleep(500);
+//         const yearCell = targetDoc.querySelector(`td[title="${sy}"] .saas-picker-cell-inner`);
+//         yearCell.click(); await sleep(500);
+//     }
+//     // ── 4. 切换月份（点月份标题→进月份网格→点目标月）──
+//     const monthBtn = targetDoc.querySelector('.saas-picker-month-btn');
+//     if (!monthBtn.innerText.includes(`${sm}月`)) {
+//         monthBtn.click(); await sleep(500);
+//         const monthCell = targetDoc.querySelector(`td[title="${sy}-${String(sm).padStart(2,'0')}"] .saas-picker-cell-inner`)
+//                        || Array.from(targetDoc.querySelectorAll('.saas-picker-cell-inner')).find(el => el.innerText.trim() === `${sm}月`);
+//         monthCell.click(); await sleep(600);
+//     }
+//     // 问题：年份/月份网格偶发找不到 cell，且跨年时点两次标题容易出错
+// }
+// ── [当前] 新版：读年月记录框→按差值点导航箭头 ────────────────────────────────
 
 /**
  * 通过 UI 日期选择器设置日期范围（在 iframe frame 中执行）
@@ -125,6 +147,53 @@ async function setDateRangeViaPicker(context, startDate, endDate, log = console.
             return false;
         };
 
+        // 读取年月记录框当前显示的年和月
+        function readHeaderYearMonth(targetDoc) {
+            const yearBtn  = targetDoc.querySelector('.saas-picker-year-btn');
+            const monthBtn = targetDoc.querySelector('.saas-picker-month-btn');
+            if (!yearBtn || !monthBtn) return null;
+            return {
+                year:  parseInt(yearBtn.innerText),
+                month: parseInt(monthBtn.innerText),
+            };
+        }
+
+        // 通过导航箭头将面板导航到目标年月
+        // 策略：先按年差点[向前/后选择一年]，再按剩余月差点[向前/后选择一个月]
+        // 注意：必须用 simulateClick（完整鼠标事件序列），btn.click() 对 React 组件无效
+        async function navigateToYearMonth(targetDoc, targetYear, targetMonth) {
+            const cur = readHeaderYearMonth(targetDoc);
+            if (!cur) return false;
+
+            // 1. 年导航
+            const yearDiff = cur.year - targetYear;
+            if (yearDiff > 0) {
+                const btn = targetDoc.querySelector('.saas-picker-header-super-prev-btn');
+                if (!btn) return false;
+                for (let i = 0; i < yearDiff; i++) { simulateClick(btn); await sleep(300); }
+            } else if (yearDiff < 0) {
+                const btn = targetDoc.querySelector('.saas-picker-header-super-next-btn');
+                if (!btn) return false;
+                for (let i = 0; i < -yearDiff; i++) { simulateClick(btn); await sleep(300); }
+            }
+
+            // 2. 月导航（重新读取，年导航后月份不变）
+            const after = readHeaderYearMonth(targetDoc);
+            if (!after) return false;
+            const monthDiff = after.month - targetMonth;
+            if (monthDiff > 0) {
+                const btn = targetDoc.querySelector('.saas-picker-header-prev-btn');
+                if (!btn) return false;
+                for (let i = 0; i < monthDiff; i++) { simulateClick(btn); await sleep(300); }
+            } else if (monthDiff < 0) {
+                const btn = targetDoc.querySelector('.saas-picker-header-next-btn');
+                if (!btn) return false;
+                for (let i = 0; i < -monthDiff; i++) { simulateClick(btn); await sleep(300); }
+            }
+
+            return true;
+        }
+
         // ── 1. 找到正确的 document 和输入框 ──
         const anchorInfo = findAnchorEverywhere(document);
         if (!anchorInfo) return { ok: false, step: '找不到输入框容器 (.saas-form-item-control-wrapper)' };
@@ -135,38 +204,24 @@ async function setDateRangeViaPicker(context, startDate, endDate, log = console.
         simulateClick(input);
         await sleep(800);
 
-        // ── 3. 切换年份（当前年份不是目标年才进入年份网格）──
-        const yearBtn = targetDoc.querySelector('.saas-picker-year-btn');
-        if (!yearBtn) return { ok: false, step: '找不到年份标题按钮 (.saas-picker-year-btn)' };
-        if (!yearBtn.innerText.includes(String(sy))) {
-            yearBtn.click();
-            await sleep(500);
-            const yearCell = targetDoc.querySelector(`td[title="${sy}"] .saas-picker-cell-inner`);
-            if (!yearCell) return { ok: false, step: `年份网格找不到: ${sy}` };
-            yearCell.click();
-            await sleep(500);
-        }
-        // ── 4. 切换月份（当前月份不是目标月才进入月份网格）──
-        const monthBtn = targetDoc.querySelector('.saas-picker-month-btn');
-        if (!monthBtn) return { ok: false, step: '找不到月份标题按钮 (.saas-picker-month-btn)' };
-        if (!monthBtn.innerText.includes(`${sm}月`)) {
-            monthBtn.click();
-            await sleep(500);
-            const monthTitle = `${sy}-${String(sm).padStart(2, '0')}`;
-            const monthCell = targetDoc.querySelector(`td[title="${monthTitle}"] .saas-picker-cell-inner`) ||
-                              Array.from(targetDoc.querySelectorAll('.saas-picker-cell-inner'))
-                                  .find(el => el.innerText.trim() === `${sm}月`);
-            if (!monthCell) return { ok: false, step: `月份网格找不到: ${sm}月` };
-            monthCell.click();
-            await sleep(600);
-        }
-        
-        // ── 5. 点击开始日 ──
+        // ── 3. 导航到开始年月（读年月记录框→按差值点箭头）──
+        const navStartOk = await navigateToYearMonth(targetDoc, sy, sm);
+        if (!navStartOk) return { ok: false, step: '导航到开始年月失败（找不到年月按钮）' };
+        await sleep(300);
+
+        // ── 4. 点击开始日 ──
         const startOk = await waitAndClickDay(targetDoc, sy, sm, sd);
         if (!startOk) return { ok: false, step: `找不到开始日: ${sy}-${sm}-${sd}` };
         await sleep(800);
 
-        // ── 6. 点击结束日（picker 渲染后轮询查找）──
+        // ── 5. 导航到结束年月
+        //    注意：点完开始日后，年月记录框会重置回当前月（如 2026/02），
+        //    navigateToYearMonth 会重新读取头部实时值，所以计算基准是正确的 ──
+        const navEndOk = await navigateToYearMonth(targetDoc, ey, em);
+        if (!navEndOk) return { ok: false, step: '导航到结束年月失败（找不到年月按钮）' };
+        await sleep(300);
+
+        // ── 6. 点击结束日 ──
         const endOk = await waitAndClickDay(targetDoc, ey, em, ed);
         if (!endOk) return { ok: false, step: `找不到结束日: ${ey}-${em}-${ed}` };
         await sleep(300);
@@ -341,7 +396,7 @@ async function clickQuery(context, log = console.log) {
             return findAndClick(document, '查询');
         });
         log(clicked ? '✅ 已点击查询' : '⚠️  未找到查询按钮');
-        await sleep(3000);
+        await sleep(1000);
         return clicked;
     } catch (e) { log(`   （查询按钮处理失败: ${e.message}）`); return false; }
 }
@@ -381,10 +436,33 @@ async function goToDownloadList(context, log = console.log) {
     log('📋 进入下载清单...');
     try {
         const clicked = await context.evaluate(() => {
-            for (const btn of document.querySelectorAll('button.ant-btn-primary')) {
-                if (btn.textContent.trim() === '前往下载清单') { btn.click(); return true; }
+            // 递归穿透 Shadow DOM 和同源 iframe
+            function findButtonEverywhere(root, text) {
+                // 1. 当前层级的所有 button
+                const target = Array.from(root.querySelectorAll('button'))
+                    .find(b => b.textContent.includes(text));
+                if (target) return target;
+                // 2. Shadow DOM
+                for (const el of root.querySelectorAll('*')) {
+                    if (el.shadowRoot) {
+                        const found = findButtonEverywhere(el.shadowRoot, text);
+                        if (found) return found;
+                    }
+                }
+                // 3. 同源 iframe
+                for (const iframe of root.querySelectorAll('iframe')) {
+                    try {
+                        const found = findButtonEverywhere(iframe.contentDocument, text);
+                        if (found) return found;
+                    } catch (_) {}
+                }
+                return null;
             }
-            return false;
+
+            const btn = findButtonEverywhere(document, '前往下载清单');
+            if (!btn) return false;
+            btn.click();
+            return true;
         });
         if (clicked) { log('✅ 已进入下载清单'); await sleep(2000); return true; }
         log('⚠️  未找到下载清单链接');

@@ -71,15 +71,22 @@ function generateExportFileName(year, month) {
 }
 
 /**
- * 从文件名提取月份（兼容所有前缀）
- * "2025.01月全渠道订单明细.xlsx"   → "2025-01"
- * "2026.02.24日菜品销售明细.xlsx"  → "2026-02"
+ * 从文件名提取月份（兼容多种命名格式）
+ * "2025.01月全渠道订单明细.xlsx"          → "2025-01"
+ * "2026.02.24日菜品销售明细.xlsx"         → "2026-02"
+ * "全渠道订单明细_2025-01-01_2025-01-02.xlsx" → "2025-01"
+ * "菜品销售明细_2025-01-01_2025-01-02.xlsx"   → "2025-01"
  */
 function extractMonthFromFilename(filename) {
+    // 格式一：2025.01月xxx.xlsx
     const monthly = filename.match(/(\d{4})\.(\d{2})月/);
     if (monthly) return `${monthly[1]}-${monthly[2]}`;
+    // 格式二：2026.02.24日xxx.xlsx
     const daily = filename.match(/(\d{4})\.(\d{2})\.\d{2}日/);
     if (daily) return `${daily[1]}-${daily[2]}`;
+    // 格式三：xxx_2025-01-01_2025-01-02.xlsx（取起始日期的年月）
+    const dashDate = filename.match(/_(\d{4})-(\d{2})-\d{2}/);
+    if (dashDate) return `${dashDate[1]}-${dashDate[2]}`;
     return null;
 }
 

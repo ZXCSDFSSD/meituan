@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>常青麦香园 · 综合开发手册</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f1117; color: #e2e8f0; font-size: 13px; display: flex; }
+
+  /* ── 侧边目录 */
+  .toc {
+    width: 220px; min-height: 100vh; background: #141923; border-right: 1px solid #2d3748;
+    padding: 24px 0; position: fixed; top: 0; left: 0; overflow-y: auto;
+  }
+  .toc-title { color: #7dd3fc; font-size: 12px; font-weight: 700; padding: 0 16px 12px; letter-spacing: 1px; border-bottom: 1px solid #2d3748; margin-bottom: 8px; }
+  .toc a { display: block; padding: 5px 16px; color: #64748b; font-size: 12px; text-decoration: none; transition: all .15s; }
+  .toc a:hover { color: #7dd3fc; background: #1e2535; }
+  .toc a.h2 { color: #94a3b8; font-weight: 600; margin-top: 6px; }
+  .toc a.h3 { padding-left: 28px; font-size: 11px; }
+
+  /* ── 主内容区 */
+  .main { margin-left: 220px; max-width: 1100px; padding: 32px 32px 80px; width: 100%; }
+
+  h1 { color: #7dd3fc; font-size: 22px; letter-spacing: 2px; margin-bottom: 6px; }
+  .page-subtitle { color: #64748b; font-size: 12px; margin-bottom: 32px; }
+
+  h2 { color: #7dd3fc; font-size: 16px; font-weight: 700; margin: 40px 0 16px;
+       border-left: 4px solid #3b82f6; padding-left: 12px; }
+  h3 { color: #a78bfa; font-size: 14px; font-weight: 600; margin: 24px 0 10px;
+       border-left: 2px solid #7c3aed; padding-left: 10px; }
+  h4 { color: #94a3b8; font-size: 13px; font-weight: 600; margin: 16px 0 8px; }
+
+  p { color: #94a3b8; line-height: 1.8; margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { color: #94a3b8; line-height: 2.0; font-size: 12px; }
+  li strong { color: #cbd5e1; }
+
+  .mono { font-family: monospace; background: #141923; border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #67e8f9; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; vertical-align:middle; margin-left:6px; }
+  .done { background:#064e3b; color:#6ee7b7; }
+  .todo { background:#2d1a00; color:#fbbf24; }
+  .warn { background:#3b1e00; color:#fca5a5; }
+  .note { background:#1e2535; color:#93c5fd; }
+
+  .code-block {
+    background:#0d1117; border:1px solid #2d3748; border-radius:8px;
+    padding:14px 16px; margin:10px 0; font-family:'Cascadia Code','Fira Code',monospace;
+    font-size:12px; line-height:1.7; overflow-x:auto; white-space:pre;
+  }
+  .code-block .k  { color:#ff7b72; }
+  .code-block .s  { color:#a5d6ff; }
+  .code-block .n  { color:#7ee787; }
+  .code-block .c  { color:#8b949e; }
+  .code-block .fn { color:#d2a8ff; }
+
+  .grid { display:grid; gap:14px; }
+  .g2 { grid-template-columns: repeat(2,1fr); }
+  .g3 { grid-template-columns: repeat(3,1fr); }
+  @media(max-width:900px){ .g3{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:700px){ .g2,.g3{grid-template-columns:1fr;} }
+
+  .card { background:#1e2535; border:1px solid #2d3748; border-radius:10px; padding:14px 16px; }
+  .card-title { font-size:13px; font-weight:600; margin-bottom:8px; }
+
+  table { width:100%; border-collapse:collapse; font-size:12px; margin:12px 0; }
+  th { background:#1a2236; color:#7dd3fc; padding:8px 12px; text-align:left; font-weight:600; }
+  td { padding:7px 12px; border-bottom:1px solid #1e2535; color:#94a3b8; vertical-align:top; }
+  tr:hover td { background:#1e2535; }
+
+  .callout { background:#1e2535; border:1px solid #2d3748; border-radius:8px; padding:12px 16px; margin:12px 0; }
+  .callout.green { border-color:#059669; background:#0a1f12; }
+  .callout.yellow { border-color:#d97706; background:#1c1208; }
+  .callout.red { border-color:#dc2626; background:#1f0a0a; }
+  .callout.blue { border-color:#2563eb; background:#0a1020; }
+  .callout-icon { font-size:14px; margin-right:6px; }
+  .callout p { margin-bottom:0; }
+
+  hr { border:none; border-top:1px solid #2d3748; margin:32px 0; }
+  .tag-done { color:#6ee7b7; } .tag-todo { color:#fbbf24; } .tag-warn { color:#fca5a5; }
+
+  /* 文档链接卡 */
+  .doc-link { display:flex; align-items:center; gap:12px; background:#141923;
+              border:1px solid #2d3748; border-radius:8px; padding:10px 16px;
+              text-decoration:none; margin-bottom:8px; transition:all .15s; }
+  .doc-link:hover { border-color:#3b82f6; background:#1e2535; }
+  .doc-link .dl-icon { font-size:18px; flex-shrink:0; }
+  .doc-link .dl-name { color:#7dd3fc; font-size:13px; font-weight:600; }
+  .doc-link .dl-desc { color:#64748b; font-size:11px; margin-top:2px; }
+  .doc-link .dl-badge { margin-left:auto; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ── 侧边目录 ── -->
+<nav class="toc">
+  <div class="toc-title">📚 综合手册目录</div>
+  <a class="h2" href="#s1">一、SQL 视图评估</a>
+  <a class="h2" href="#s2">二、架构思维总结</a>
+  <a class="h3" href="#s2-1">需求拆解过程</a>
+  <a class="h3" href="#s2-2">关键技术决策</a>
+  <a class="h3" href="#s2-3">调试思路回顾</a>
+  <a class="h2" href="#s3">三、技术学习要点</a>
+  <a class="h3" href="#s3-ts">TypeScript</a>
+  <a class="h3" href="#s3-react">React Hooks</a>
+  <a class="h3" href="#s3-echarts">ECharts</a>
+  <a class="h3" href="#s3-s2">@antv/s2</a>
+  <a class="h3" href="#s3-zustand">Zustand</a>
+  <a class="h3" href="#s3-sql">SQL 要点</a>
+  <a class="h2" href="#s4">四、开发注意事项</a>
+  <a class="h3" href="#s4-1">已知限制</a>
+  <a class="h3" href="#s4-2">导入注意</a>
+  <a class="h3" href="#s4-3">前端注意</a>
+  <a class="h3" href="#s4-4">待优化清单</a>
+  <a class="h2" href="#s5">五、项目文档索引</a>
+  <a class="h2" href="#s6">六、快速启动备忘</a>
+</nav>
+
+<!-- ── 主内容 ── -->
+<div class="main">
+
+<h1>常青麦香园 · 综合开发手册</h1>
+<p class="page-subtitle">更新于 2026-03-01 &nbsp;|&nbsp; 架构思维 · 学习摘要 · 注意事项 · 文档索引 · 全合一</p>
+
+<!-- ══════════════════════════════════════════
+     一、SQL 视图评估
+═══════════════════════════════════════════ -->
+<h2 id="s1">一、SQL 视图评估——要不要建？</h2>
+
+<p>接口规范 Section 2 建议了两个视图。结论：<strong style="color:#6ee7b7">当前不需要建，留作可选优化</strong>。</p>
+
+<div class="grid g2" style="margin-bottom:16px;">
+  <div class="card">
+    <div class="card-title" style="color:#fbbf24">v_annual_compare（同比环比年度视图）</div>
+    <ul>
+      <li><strong>目的</strong>：方便一次 SELECT 得到两年数据，不用写两次 JOIN</li>
+      <li><strong>当前状态</strong>：<span class="mono">/monthly-compare</span> API 已通过 JS 的 <span class="mono">thisYearMonths / lastYearMonths</span> 数组处理，前端 S2透视表正常显示</li>
+      <li><strong>结论</strong>：<span class="tag-todo">暂不建</span>——API 工作正常，视图只是方便后续直接写 SQL 查询，目前不影响功能</li>
+      <li><strong>未来触发时机</strong>：需要导出报表到 Excel 时，直接 SQLite 查询更方便</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:#fbbf24">v_category_monthly（品类月度透视视图）</div>
+    <ul>
+      <li><strong>目的</strong>：把 <span class="mono">item_sales_summary</span> 和 <span class="mono">category_mapping</span> 的 LEFT JOIN 封装成视图</li>
+      <li><strong>当前状态</strong>：<span class="mono">/category-sales</span> API 内部已做这个 JOIN，品类横条图正常显示</li>
+      <li><strong>结论</strong>：<span class="tag-todo">暂不建</span>——功能已实现，视图只减少重复 SQL 书写</li>
+      <li><strong>未来触发时机</strong>：如果后续要在 analytics.js 外部多处复用品类查询</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout blue">
+  <p><span class="callout-icon">💡</span><strong>建视图的正确时机</strong>：当同一个复杂 JOIN 在代码中出现 3 次以上，或需要直接用 SQLite 工具（如 DB Browser）导出数据时，再建视图。过早优化会增加维护负担。</p>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════
+     二、架构思维总结
+═══════════════════════════════════════════ -->
+<h2 id="s2">二、架构思维总结——如何一步步把需求变成代码</h2>
+
+<h3 id="s2-1">需求拆解过程</h3>
+
+<p>原始需求是：11个 Excel Sheet → Dashboard 可视化。拆解过程如下：</p>
+
+<div class="code-block"><span class="c">// 分析师给出 Excel → 我需要反向推导数据库结构</span>
+
+<span class="c">步骤1：识别"事实表"和"维度表"</span>
+- 事实：订单（orders）、品项明细（order_dishes）、收款（payment_method_summary）
+- 维度：门店（stores）、时段（timeslot_summary）、品类（category_mapping）
+
+<span class="c">步骤2：识别数据源 → 每张表从哪个 Excel 来</span>
+- 全渠道订单明细 → orders + sales_summary + monthly_summary
+- 菜品销售明细   → order_dishes + item_sales_summary + timeslot_summary
+- 收款明细       → payment_method_summary
+
+<span class="c">步骤3：识别"连接键"的唯一来源</span>
+- store_id 唯一来源是菜品销售明细（机构编码列）
+- 其他两个文件只有门店名称，必须先处理菜品才能 JOIN
+
+<span class="c">步骤4：确定处理顺序</span>
+- 菜品销售明细 → 全渠道订单明细 → 收款明细
+- 这个顺序不能打乱</div>
+
+<h3 id="s2-2">关键技术决策（每个决策的理由）</h3>
+
+<table>
+  <tr><th>决策</th><th>选择</th><th>理由</th><th>放弃的方案</th></tr>
+  <tr>
+    <td>数据库</td>
+    <td>SQLite</td>
+    <td>单机部署、无需网络、嵌入式、Python/Node 直连、文件可备份</td>
+    <td>PostgreSQL（太重）、MySQL（需安装服务）</td>
+  </tr>
+  <tr>
+    <td>数据预聚合</td>
+    <td>monthly_summary 表（导入时计算）</td>
+    <td>API 响应变为 O(1) SELECT；代价是导入时间更长（可接受）</td>
+    <td>API 实时计算（每次请求跑聚合，慢）</td>
+  </tr>
+  <tr>
+    <td>前端状态</td>
+    <td>Zustand 5 + persist</td>
+    <td>状态只有月份/门店/渠道/主题，不需要 Redux 的复杂中间件</td>
+    <td>Redux Toolkit（过度工程）、React Context（性能差）</td>
+  </tr>
+  <tr>
+    <td>页面数量</td>
+    <td>3页（总览/趋势/单店）</td>
+    <td>分析后发现渠道/品类/时段数据量适合内嵌，不需要独立页</td>
+    <td>7页（规范中规划，实际简化）</td>
+  </tr>
+  <tr>
+    <td>渠道标准化</td>
+    <td>淘宝闪购=饿了么</td>
+    <td>业务知识：饿了么被阿里收购后技术合并，闪购=饿了么</td>
+    <td>单独保留"淘宝"（会分裂统计）</td>
+  </tr>
+  <tr>
+    <td>品类标准化</td>
+    <td>category_mapping 映射表</td>
+    <td>98种原始名→9大标准品类，用数据库映射比代码 switch/case 更灵活可维护</td>
+    <td>代码硬编码 regexp（难以扩展）</td>
+  </tr>
+  <tr>
+    <td>S2 透视表</td>
+    <td>命令式 API（new PivotSheet）</td>
+    <td>@antv/s2 v2 是命令式库，不是 React 组件；必须配合 useRef + useEffect</td>
+    <td>无可替代方案（库本身的限制）</td>
+  </tr>
+  <tr>
+    <td>代码注释</td>
+    <td>三层注释（What/Why/How）</td>
+    <td>目标读者是只懂 JS 的开发者；注释要教学而不只是描述</td>
+    <td>只写 JSDoc 类型注释（信息量不足）</td>
+  </tr>
+</table>
+
+<h3 id="s2-3">调试思路回顾（遇到错误怎么想）</h3>
+
+<div class="grid g2">
+  <div class="card">
+    <div class="card-title" style="color:#f9a8d4">🐛 TS2698 TypeScript 泛型错误</div>
+    <ul>
+      <li><strong>错误</strong>：<span class="mono">Spread types may only be created from object types</span></li>
+      <li><strong>原因</strong>：对泛型参数 <span class="mono">T</span> 做展开 <span class="mono">{...props as T}</span>，TS 严格模式下不知道 T 是对象类型</li>
+      <li><strong>思路</strong>：不要让类型系统"猜"，改为使用具体类型引用（<span class="mono">Record&lt;string, unknown&gt;</span> 或具体接口）</li>
+      <li><strong>教训</strong>：TypeScript 错误通常指向"你给的信息不够"，解决方法是"给更多具体类型信息"</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:#f9a8d4">🐛 API 启动失败（数据库未初始化）</div>
+    <ul>
+      <li><strong>错误</strong>：直接运行 <span class="mono">node src/api/index.js</span> → 数据库不存在</li>
+      <li><strong>原因</strong>：<span class="mono">api/index.js</span> 只导出 <span class="mono">startServer</span> 函数，没有初始化 DB</li>
+      <li><strong>思路</strong>：溯源启动流程 → main.js 先调用 <span class="mono">storage.initDatabase()</span> 再调用 <span class="mono">startServer()</span></li>
+      <li><strong>教训</strong>：模块化代码中，顺序依赖必须通过入口文件控制</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:#f9a8d4">🐛 品类显示碎片化（~98种）</div>
+    <ul>
+      <li><strong>现象</strong>：/category-sales 返回几十个品类，图表无法看</li>
+      <li><strong>根因</strong>：各门店对同一品类的命名不一致（emoji/空格/别名变体）</li>
+      <li><strong>解决</strong>：建 category_mapping 表，99条映射 → 9大标准品类；API 查询时 JOIN 标准化</li>
+      <li><strong>教训</strong>：用户数据从来不干净，标准化层是必须的</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:#f9a8d4">🐛 S2 实例 React 状态冲突</div>
+    <ul>
+      <li><strong>现象</strong>：S2 在 React 状态更新时报错/重复渲染</li>
+      <li><strong>原因</strong>：S2 是命令式库，有自己的生命周期；React 重渲染时不自动 destroy</li>
+      <li><strong>解决</strong>：用 <span class="mono">s2Ref = useRef(null)</span> 保存实例；<span class="mono">useEffect</span> 的 cleanup 函数里调用 <span class="mono">s2.destroy()</span></li>
+      <li><strong>教训</strong>：命令式库接入 React 的标准模式：useRef + useEffect + cleanup</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════
+     三、技术学习要点（精华摘要）
+═══════════════════════════════════════════ -->
+<h2 id="s3">三、技术学习要点精华摘要</h2>
+<p style="color:#64748b;">完整 11 章学习文档见 <span class="mono">notes/技术教程.md</span>。此处为高频用法速查。</p>
+
+<!-- TypeScript -->
+<h3 id="s3-ts">TypeScript 核心概念速查</h3>
+<div class="code-block"><span class="c">// ① interface 接口：定义对象形状</span>
+<span class="k">interface</span> <span class="fn">StoreInfo</span> {
+  store_id: <span class="s">string</span>;           <span class="c">// 必填</span>
+  has_partner: <span class="s">boolean</span>;
+  open_date?: <span class="s">string</span>;          <span class="c">// ? = 可选字段</span>
+}
+
+<span class="c">// ② 联合类型：限制取值范围</span>
+<span class="k">type</span> Channel = <span class="s">'堂食'</span> | <span class="s">'美团外卖'</span> | <span class="s">'饿了么'</span> | <span class="s">'京东秒送'</span> | <span class="s">'all'</span>;
+
+<span class="c">// ③ 泛型 T：让函数/Hook 适配不同类型</span>
+<span class="k">function</span> <span class="fn">useState</span>&lt;T&gt;(init: T): [T, (v: T) => <span class="k">void</span>]  <span class="c">// React 源码简化版</span>
+
+<span class="c">// ④ 可选链 + 空值合并：安全访问</span>
+<span class="k">const</span> name = store?.store_name ?? <span class="s">'未知门店'</span>;  <span class="c">// store 可能为 null</span>
+
+<span class="c">// ⑤ 类型断言：当你比 TS 更了解类型时</span>
+<span class="k">const</span> el = ref.current<span class="k"> as</span> HTMLDivElement;    <span class="c">// 告诉 TS "我确定是 div"</span>
+
+<span class="c">// ⑥ 非空断言 ! ：确认值不为 null/undefined</span>
+s2Ref.current<span class="k">!</span>.destroy();  <span class="c">// 告诉 TS "current 一定有值"</span></div>
+
+<!-- React Hooks -->
+<h3 id="s3-react">React Hooks 模式速查</h3>
+<div class="code-block"><span class="c">// 数据获取的三态模型（所有异步 Hook 的标准结构）</span>
+<span class="k">function</span> <span class="fn">useOverview</span>() {
+  <span class="k">const</span> [data, setData] = useState&lt;OverviewResponse | <span class="k">null</span>&gt;(<span class="k">null</span>);
+  <span class="k">const</span> [loading, setLoading] = useState(<span class="k">true</span>);
+  <span class="k">const</span> [error, setError] = useState&lt;<span class="s">string</span> | <span class="k">null</span>&gt;(<span class="k">null</span>);
+
+  useEffect(() => {
+    setLoading(<span class="k">true</span>);
+    api.getOverview(params)
+      .then(setData)                       <span class="c">// 成功：存数据</span>
+      .catch((e: Error) => setError(e.message))  <span class="c">// 失败：存错误</span>
+      .finally(() => setLoading(<span class="k">false</span>));   <span class="c">// 最终：关 loading</span>
+  }, [params.month, params.storeId]);      <span class="c">// 依赖变化时重新请求</span>
+
+  <span class="k">return</span> { data, loading, error };
+}
+
+<span class="c">// useRef 双用途：① DOM节点绑定  ② 保存实例（不触发重渲染）</span>
+<span class="k">const</span> containerRef = useRef&lt;HTMLDivElement&gt;(<span class="k">null</span>);  <span class="c">// 绑 DOM</span>
+<span class="k">const</span> s2Ref = useRef&lt;SpreadSheet | <span class="k">null</span>&gt;(<span class="k">null</span>);         <span class="c">// 保存 S2 实例</span></div>
+
+<!-- ECharts -->
+<h3 id="s3-echarts">ECharts 配置要点</h3>
+<div class="code-block"><span class="c">// 双 Y 轴（左=营业额，右=环比%）</span>
+option = {
+  yAxis: [
+    { type: <span class="s">'value'</span>, name: <span class="s">'营业额'</span> },    <span class="c">// index 0 = 左轴</span>
+    { type: <span class="s">'value'</span>, name: <span class="s">'环比%'</span> }      <span class="c">// index 1 = 右轴</span>
+  ],
+  series: [
+    { yAxisIndex: <span class="n">0</span>, type: <span class="s">'bar'</span>, ... },   <span class="c">// 使用左轴</span>
+    { yAxisIndex: <span class="n">1</span>, type: <span class="s">'line'</span>, ... }   <span class="c">// 使用右轴</span>
+  ]
+}
+
+<span class="c">// 面积图渐变填充</span>
+areaStyle: {
+  color: { type: <span class="s">'linear'</span>, x:<span class="n">0</span>, y:<span class="n">0</span>, x2:<span class="n">0</span>, y2:<span class="n">1</span>, colorStops: [
+    { offset: <span class="n">0</span>, color: color + <span class="s">'BB'</span> },    <span class="c">// 顶部：73%不透明</span>
+    { offset: <span class="n">1</span>, color: color + <span class="s">'11'</span> }     <span class="c">// 底部：7%不透明</span>
+  ]}
+}
+
+<span class="c">// 自定义 tooltip（HTML 格式）</span>
+tooltip: { formatter: (params) => `&lt;div&gt;${params[<span class="n">0</span>].name}: ¥${params[<span class="n">0</span>].value}&lt;/div&gt;` }</div>
+
+<!-- S2 -->
+<h3 id="s3-s2">@antv/s2 v2 命令式 API 要点</h3>
+<div class="code-block"><span class="c">// S2 完整生命周期（在 useEffect 里）</span>
+useEffect(() => {
+  <span class="k">if</span> (!containerRef.current || !data) <span class="k">return</span>;
+
+  <span class="c">// 1. 创建实例（命令式，不是 JSX）</span>
+  <span class="k">const</span> s2 = <span class="k">new</span> PivotSheet(containerRef.current, dataConfig, options);
+
+  <span class="c">// 2. 应用主题</span>
+  s2.setTheme(palette);
+
+  <span class="c">// 3. 渲染（异步，返回 Promise）</span>
+  s2.render();
+
+  <span class="c">// 4. 保存实例引用</span>
+  s2Ref.current = s2;
+
+  <span class="c">// 5. cleanup：组件卸载时必须 destroy，否则内存泄漏</span>
+  <span class="k">return</span> () => { s2.destroy(); s2Ref.current = <span class="k">null</span>; };
+}, [data]);  <span class="c">// data 变化重建</span>
+
+<span class="c">// S2DataConfig 结构</span>
+dataConfig = {
+  fields: {
+    rows:   [<span class="s">'指标'</span>],    <span class="c">// 行头：每行是一个指标（营业额/TC/AC/MoM）</span>
+    columns:[<span class="s">'月份'</span>],    <span class="c">// 列头：每列是一个月份</span>
+    values: [<span class="s">'数值'</span>, <span class="s">'环比'</span>]  <span class="c">// 单元格：显示两个值</span>
+  },
+  data: flatData  <span class="c">// 扁平数组：[{指标:'营业额', 月份:'2025-01', 数值:380000, 环比:null}]</span>
+}</div>
+
+<!-- Zustand -->
+<h3 id="s3-zustand">Zustand 5 状态管理要点</h3>
+<div class="code-block"><span class="c">// create + persist 完整模式</span>
+<span class="k">const</span> useGlobalFilter = <span class="fn">create</span>&lt;FilterState&gt;()(
+  <span class="fn">persist</span>(
+    (set, get) => ({
+      selectedMonth: <span class="s">''</span>,
+
+      <span class="c">// set 函数：用函数形式可以访问当前 state</span>
+      setMonth: (m) => set({ selectedMonth: m }),
+
+      <span class="c">// 计算出 API 参数（条件构建，不包含空值）</span>
+      toParams: () => ({
+        month: get().selectedMonth || <span class="k">undefined</span>,
+        ...(<span class="fn">get</span>().selectedStoreId ? { storeId: get().selectedStoreId } : {})
+      })
+    }),
+    {
+      name: <span class="s">'meituan-filter'</span>,               <span class="c">// localStorage key</span>
+      partialize: (s) => ({                   <span class="c">// 只持久化这些字段</span>
+        selectedMonth: s.selectedMonth,
+        isDark: s.isDark
+        <span class="c">// 不持久化 loading 状态</span>
+      })
+    }
+  )
+);</div>
+
+<!-- SQL -->
+<h3 id="s3-sql">SQL 查询技巧速查</h3>
+<div class="code-block"><span class="c">-- ① COALESCE：处理 NULL，取第一个非 NULL 值</span>
+<span class="k">SELECT</span> COALESCE(cm.standard_name, iss.category) <span class="k">AS</span> std_category
+<span class="k">FROM</span> item_sales_summary iss
+<span class="k">LEFT JOIN</span> category_mapping cm <span class="k">ON</span> cm.raw_name = iss.category;
+<span class="c">-- 有映射用标准名，没映射用原始名</span>
+
+<span class="c">-- ② CASE WHEN：条件分支（相当于 if/else）</span>
+<span class="k">SELECT</span>
+  <span class="k">CASE</span> <span class="k">WHEN</span> channel <span class="k">IN</span> (<span class="s">'美团外卖'</span>,<span class="s">'饿了么'</span>,<span class="s">'京东秒送'</span>) <span class="k">THEN</span> <span class="s">'外卖'</span>
+       <span class="k">ELSE</span> channel
+  <span class="k">END</span> <span class="k">AS</span> channel_group
+<span class="k">FROM</span> monthly_summary;
+
+<span class="c">-- ③ 动态 WHERE 构建（JS 端）</span>
+<span class="k">let</span> where = [<span class="s">'m.month = ?'</span>]; <span class="k">let</span> params = [month];
+<span class="k">if</span> (storeId) { where.push(<span class="s">'m.store_id = ?'</span>); params.push(storeId); }
+<span class="k">const</span> sql = `<span class="k">SELECT</span> ... <span class="k">WHERE</span> ${where.join(<span class="s">' AND '</span>)}`;
+<span class="c">-- 避免 SQL 注入：始终用参数化查询（?），不要拼接字符串</span>
+
+<span class="c">-- ④ 24小时数组补全（JS 端）</span>
+<span class="k">const</span> arr = Array(<span class="n">24</span>).fill(<span class="n">0</span>);   <span class="c">// [0,0,0,...,0] 长度24</span>
+rows.forEach(r => arr[r.hour] = r.tc);  <span class="c">// 有数据的时段覆盖</span></div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════
+     四、开发注意事项
+═══════════════════════════════════════════ -->
+<h2 id="s4">四、开发注意事项 & 已知陷阱</h2>
+
+<h3 id="s4-1">已知限制（架构层面）</h3>
+
+<table>
+  <tr><th>问题</th><th>说明</th><th>影响</th><th>解决/绕开</th></tr>
+  <tr>
+    <td><span class="tag-warn">item_sales_summary 无渠道字段</span></td>
+    <td>菜品汇总表按品项聚合，未保存渠道来源</td>
+    <td>Sheet7/8 堂食vs外卖品类分析无法做</td>
+    <td>需扩展 order_dishes 关联 channel，重新聚合；当前跳过</td>
+  </tr>
+  <tr>
+    <td><span class="tag-warn">东辉花园店 store_id 待定</span></td>
+    <td>2025-03 数据未导入，尚未获得机构编码</td>
+    <td>单店详情中东辉店 store_id 为"待定"</td>
+    <td>导入 2025-03 数据后自动写入 stores 表</td>
+  </tr>
+  <tr>
+    <td><span class="tag-warn">category_mapping NULL UNIQUE 问题</span></td>
+    <td>SQLite 的 NULL != NULL，UNIQUE(raw_name, store_id) 对 NULL store_id 不生效</td>
+    <td>全局映射可能重复插入</td>
+    <td>已修复：写入前先 DELETE WHERE store_id IS NULL，再重新插入</td>
+  </tr>
+  <tr>
+    <td><span class="tag-warn">Vite proxy 仅开发有效</span></td>
+    <td><span class="mono">vite.config.ts</span> 的 proxy 只在 <span class="mono">npm run dev</span> 时生效</td>
+    <td>生产部署后前端无法访问 :3000</td>
+    <td>生产需 Nginx 反代，或 Express 直接服务 dist/ 静态文件</td>
+  </tr>
+  <tr>
+    <td><span class="tag-warn">S2 ResizeObserver 泄漏</span></td>
+    <td>ResizeObserver 若不在 cleanup 里 disconnect，组件卸载后仍在监听</td>
+    <td>内存泄漏 + 控制台警告</td>
+    <td>已在 S2MonthlyPivot 第二个 useEffect cleanup 里调用 <span class="mono">observer.disconnect()</span></td>
+  </tr>
+</table>
+
+<h3 id="s4-2">数据导入注意事项</h3>
+
+<div class="callout yellow">
+  <p><span class="callout-icon">⚠️</span><strong>Fix2 品类 "--" 修复</strong>需要重新导入历史数据才生效！如果只新增导入，历史数据中的 dish_category = "--" 不会自动更新。需要先清空 item_sales_summary 相关数据，再重新 <span class="mono">node main.js --import</span>。</p>
+</div>
+
+<ul>
+  <li><strong>导入顺序不能变</strong>：菜品销售明细 → 全渠道订单明细 → 收款明细（pipeline.js 中已固定）</li>
+  <li><strong>跳过已处理文件</strong>：importAll 会检查文件是否已导入（processed_files 表），同一文件不会重复导入</li>
+  <li><strong>月份提取</strong>：文件名格式 <span class="mono">XXX_2025-01-01_2025-01-31.xlsx</span>，从开始日期提取月份</li>
+  <li><strong>合计行过滤</strong>：Excel 末尾的"合计"行在解析时过滤掉（storeName === '合计' || '- -'）</li>
+  <li><strong>表头偏移</strong>：美团 Excel 前 2 行是标题和筛选条件，<span class="mono">xlsx.utils.sheet_to_json({range:2})</span> 跳过</li>
+</ul>
+
+<h3 id="s4-3">前端开发注意事项</h3>
+
+<ul>
+  <li><strong>S2 必须调用 destroy()</strong>：否则内存泄漏，useEffect cleanup 里调用</li>
+  <li><strong>ECharts notMerge=true</strong>：当 option 完全变化时用 <span class="mono">notMerge</span> prop，否则旧数据会和新数据合并出错</li>
+  <li><strong>Zustand partialize</strong>：不要把 loading/error 状态持久化到 localStorage，只持久化月份/主题等用户偏好</li>
+  <li><strong>TypeScript 泛型展开</strong>：不要对泛型参数 T 直接做 <span class="mono">{...obj as T}</span>，改用具体类型或 <span class="mono">Object.assign</span></li>
+  <li><strong>可选链防崩</strong>：API 返回数据前 <span class="mono">data?.months ?? []</span>，避免 map/filter 在 null 上报错</li>
+  <li><strong>Windows 无 /dev/stdin</strong>：测试时不能用 <span class="mono">curl | node -e "readFileSync('/dev/stdin')"</span>，直接用 <span class="mono">curl -s URL</span> 查看</li>
+</ul>
+
+<h3 id="s4-4">待优化清单（按优先级）</h3>
+
+<table>
+  <tr><th>优先级</th><th>项目</th><th>说明</th><th>触发时机</th></tr>
+  <tr>
+    <td><span class="badge todo">高</span></td>
+    <td>导入 2025 年全年历史数据</td>
+    <td>当前只有 2026-02 样本，趋势图/同比无意义</td>
+    <td>立即，用 <span class="mono">node main.js --import</span></td>
+  </tr>
+  <tr>
+    <td><span class="badge todo">高</span></td>
+    <td>确认东辉花园店 store_id</td>
+    <td>待 2025-03 数据导入后获取</td>
+    <td>导入后查 stores 表</td>
+  </tr>
+  <tr>
+    <td><span class="badge note">中</span></td>
+    <td>stores 表加 store_type/open_date</td>
+    <td>老店/新店区分，Sheet1-3 分析需要</td>
+    <td>需要按店龄过滤时</td>
+  </tr>
+  <tr>
+    <td><span class="badge note">中</span></td>
+    <td>item_sales_summary 扩展 channel</td>
+    <td>支持堂食vs外卖品类分析（Sheet7/8）</td>
+    <td>需要渠道品类对比时</td>
+  </tr>
+  <tr>
+    <td><span class="badge note">中</span></td>
+    <td>建复合索引（4个）</td>
+    <td>见接口规范 Section 2，数据量大后有意义</td>
+    <td>数据超过 50万条时</td>
+  </tr>
+  <tr>
+    <td><span class="badge note">中</span></td>
+    <td>建 v_annual_compare / v_category_monthly 视图</td>
+    <td>方便直接在 SQLite 工具中查询，不影响 API</td>
+    <td>需要导出报表时</td>
+  </tr>
+  <tr>
+    <td style="color:#64748b">低</td>
+    <td>生产部署（Express 提供静态文件）</td>
+    <td>合并前后端端口，Nginx 反代或直接 serve</td>
+    <td>需要正式上线时</td>
+  </tr>
+  <tr>
+    <td style="color:#64748b">低</td>
+    <td>API 缓存（30分钟 TTL）</td>
+    <td>减少 SQLite 重复查询，数据基本是静态的</td>
+    <td>并发请求多时</td>
+  </tr>
+  <tr>
+    <td style="color:#64748b">低</td>
+    <td>前端数字格式工具函数</td>
+    <td>把 ¥12.3万 / +5.3% / -2.1% 颜色封装成统一工具</td>
+    <td>可随时补充，影响 UI 美观</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ══════════════════════════════════════════
+     五、项目文档索引
+═══════════════════════════════════════════ -->
+<h2 id="s5">五、项目文档索引</h2>
+
+<a class="doc-link" href="开发全景图.html">
+  <span class="dl-icon">🗺️</span>
+  <div>
+    <div class="dl-name">开发全景图.html</div>
+    <div class="dl-desc">模块进度（4个模块全 100%）· 数据流向图 · API端点列表 · 数据库表结构 · 前端完成详情 · 存储模块修复记录</div>
+  </div>
+  <span class="dl-badge"><span class="badge done">v2 已更新</span></span>
+</a>
+
+<a class="doc-link" href="接口规范.html">
+  <span class="dl-icon">📋</span>
+  <div>
+    <div class="dl-name">接口规范.html</div>
+    <div class="dl-desc">7章：业务指标口径 · 数据库设计建议 · 7页规划（3页已实现）· 9端点完整Request+Response · Sheet→API映射 · 任务清单 · 设计规范</div>
+  </div>
+  <span class="dl-badge"><span class="badge done">v2.0 已更新</span></span>
+</a>
+
+<a class="doc-link" href="项目总览.html">
+  <span class="dl-icon">📊</span>
+  <div>
+    <div class="dl-name">项目总览.html</div>
+    <div class="dl-desc">系统架构图 · 模块状态（全部完成）· 数据库10张表 · 8家门店清单 · 渠道标准名 · API端点 · notes索引 · 启动方式</div>
+  </div>
+  <span class="dl-badge"><span class="badge done">已更新</span></span>
+</a>
+
+<a class="doc-link" href="技术教程.md">
+  <span class="dl-icon">📘</span>
+  <div>
+    <div class="dl-name">技术教程.md</div>
+    <div class="dl-desc">11章完整学习文档：TypeScript · React Hooks · Vite · Ant Design v5 · ECharts 5 · @antv/s2 v2 · Zustand 5 · Axios · SQL · Express · 项目架构</div>
+  </div>
+  <span class="dl-badge"><span class="badge done">新增</span></span>
+</a>
+
+<a class="doc-link" href="综合手册.html">
+  <span class="dl-icon">🗒️</span>
+  <div>
+    <div class="dl-name">综合手册.html（本文件）</div>
+    <div class="dl-desc">SQL视图评估 · 架构思维总结 · 技术要点速查 · 开发注意事项 · 待优化清单 · 文档索引 · 快速启动</div>
+  </div>
+  <span class="dl-badge"><span class="badge done">新增</span></span>
+</a>
+
+<hr>
+
+<!-- ══════════════════════════════════════════
+     六、快速启动备忘
+═══════════════════════════════════════════ -->
+<h2 id="s6">六、快速启动备忘</h2>
+
+<div class="grid g2">
+  <div>
+    <h4>后端启动</h4>
+    <div class="code-block"><span class="c"># 完整启动（导入Excel + API + 定时任务）</span>
+node main.js
+
+<span class="c"># 仅导入 downloads/ 里的 Excel，不启动服务</span>
+node main.js --import
+
+<span class="c"># 后端端口</span>
+http://localhost:<span class="n">3000</span>
+/api/health        <span class="c"># 健康检查</span>
+/api/analytics/overview?month=2026-02</div>
+  </div>
+  <div>
+    <h4>前端启动</h4>
+    <div class="code-block"><span class="c"># 开发模式（热重载，:5173）</span>
+cd frontend
+npm run dev
+
+<span class="c"># 类型检查 + 构建生产包</span>
+npm run build      <span class="c"># → dist/</span>
+
+<span class="c"># 前端端口（开发）</span>
+http://localhost:<span class="n">5173</span>
+/api/* → 代理到 :3000（vite.config.ts）</div>
+  </div>
+</div>
+
+<h4 style="margin-top:20px;">关键文件速查</h4>
+<table>
+  <tr><th>文件</th><th>作用</th></tr>
+  <tr><td><span class="mono">main.js</span></td><td>统一入口（DB初始化 → 导入 → API → 定时任务）</td></tr>
+  <tr><td><span class="mono">src/common/config.js</span></td><td>端口/路径/POI ID 等全局配置</td></tr>
+  <tr><td><span class="mono">src/storage/parser.js</span></td><td>Excel解析、resolveChannel、buildStoreNameMap</td></tr>
+  <tr><td><span class="mono">src/storage/pipeline.js</span></td><td>三文件处理流程编排、recalculateSummary</td></tr>
+  <tr><td><span class="mono">src/api/routes/analytics.js</span></td><td>9个 Analytics 端点的 SQL 查询</td></tr>
+  <tr><td><span class="mono">frontend/src/stores/globalFilter.ts</span></td><td>Zustand 全局状态（月份/门店/渠道/主题）</td></tr>
+  <tr><td><span class="mono">frontend/src/api/client.ts</span></td><td>Axios 实例 + 所有 API 调用函数</td></tr>
+  <tr><td><span class="mono">frontend/src/App.tsx</span></td><td>路由 + ConfigProvider + lazy/Suspense</td></tr>
+  <tr><td><span class="mono">frontend/vite.config.ts</span></td><td>Vite 配置（含 proxy /api → :3000）</td></tr>
+</table>
+
+</div><!-- /main -->
+</body>
+</html>
